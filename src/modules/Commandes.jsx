@@ -247,13 +247,14 @@ export default function Commandes() {
                 <Th>Date de création</Th>
                 <Th>Valeur TTC</Th>
                 <Th>État d'avancement</Th>
+                <Th>Articles</Th>
                 <Th>Facture liée</Th>
               </Tr>
             </THead>
             <TBody>
               {filteredCommandes.length === 0 ? (
                 <Tr>
-                  <Td colSpan={6} className="text-center py-8 text-muted-foreground">Aucune commande répertoriée.</Td>
+                  <Td colSpan={7} className="text-center py-8 text-muted-foreground">Aucune commande répertoriée.</Td>
                 </Tr>
               ) : (
                 filteredCommandes.map((c) => (
@@ -263,6 +264,15 @@ export default function Commandes() {
                     <Td className="text-muted-foreground">{c.date}</Td>
                     <Td className="font-semibold text-right sm:text-left">{c.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</Td>
                     <Td><Badge status={c.etat} /></Td>
+                    <Td className="text-xs text-muted-foreground">
+                      {c.articles && c.articles.length > 0 ? (
+                        <div className="max-w-[150px] truncate">
+                          {c.articles[0].label} {c.articles.length > 1 && `(+${c.articles.length - 1})`}
+                        </div>
+                      ) : (
+                        <span>-</span>
+                      )}
+                    </Td>
                     <Td>
                       {c.factureLiee ? (
                         <span className="font-bold text-emerald-600">{c.factureLiee}</span>

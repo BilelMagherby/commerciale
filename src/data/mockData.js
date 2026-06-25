@@ -9,10 +9,10 @@ export const initialClients = [
 ];
 
 export const initialFournisseurs = [
-  { id: 1, nom: "Somme Matériels", telephone: "+33 3 22 44 55 66", email: "sales@sommemateriels.fr", adresse: "14 Rue des Indes, Amiens", solde: 3400.00 },
-  { id: 2, nom: "DistriData Systems", telephone: "+33 1 50 60 70 80", email: "orders@distridata.com", adresse: "78 Rue du Faubourg Saint-Antoine, Paris", solde: 0.00 },
-  { id: 3, nom: "Energy & Co", telephone: "+33 4 72 88 99 00", email: "facturation@energyco.fr", adresse: "56 Boulevard de la République, Lyon", solde: -1200.00 },
-  { id: 4, nom: "Office Supply Premium", telephone: "+33 2 40 12 34 56", email: "contact@officesupply.fr", adresse: "5 Rue des Olivettes, Nantes", solde: 180.00 }
+  { id: 1, nom: "Somme Matériels", telephone: "+33 3 22 44 55 66", email: "sales@sommemateriels.fr", adresse: "14 Rue des Indes, Amiens", solde: 3400.00, matriculeFiscale: "FR12345678901" },
+  { id: 2, nom: "DistriData Systems", telephone: "+33 1 50 60 70 80", email: "orders@distridata.com", adresse: "78 Rue du Faubourg Saint-Antoine, Paris", solde: 0.00, matriculeFiscale: "FR98765432109" },
+  { id: 3, nom: "Energy & Co", telephone: "+33 4 72 88 99 00", email: "facturation@energyco.fr", adresse: "56 Boulevard de la République, Lyon", solde: -1200.00, matriculeFiscale: "FR45678901234" },
+  { id: 4, nom: "Office Supply Premium", telephone: "+33 2 40 12 34 56", email: "contact@officesupply.fr", adresse: "5 Rue des Olivettes, Nantes", solde: 180.00, matriculeFiscale: "FR78901234567" }
 ];
 
 export const initialVentes = [
@@ -25,17 +25,17 @@ export const initialVentes = [
 ];
 
 export const initialAchats = [
-  { id: 1, reference: "ACH-2026-001", fournisseur: "Somme Matériels", date: "2026-06-02", montant: 4500.00, statut: "Payé" },
-  { id: 2, reference: "ACH-2026-002", fournisseur: "DistriData Systems", date: "2026-06-08", montant: 9800.00, statut: "Payé" },
-  { id: 3, reference: "ACH-2026-003", fournisseur: "Energy & Co", date: "2026-06-14", montant: 2300.00, statut: "En attente" },
-  { id: 4, reference: "ACH-2026-004", fournisseur: "Office Supply Premium", date: "2026-06-20", montant: 850.00, statut: "Partiel" }
+  { id: 1, reference: "ACH-2026-001", fournisseur: "Somme Matériels", date: "2026-06-02", montant: 4500.00, statut: "Payé", articles: [{ nom: "Matériaux construction", quantite: 100, prixUnitaire: 45.00, description: "Ciment et sable" }] },
+  { id: 2, reference: "ACH-2026-002", fournisseur: "DistriData Systems", date: "2026-06-08", montant: 9800.00, statut: "Payé", articles: [{ nom: "Serveurs Dell PowerEdge", quantite: 2, prixUnitaire: 4900.00, description: "Serveurs entreprise" }] },
+  { id: 3, reference: "ACH-2026-003", fournisseur: "Energy & Co", date: "2026-06-14", montant: 2300.00, statut: "En attente", articles: [{ nom: "Panneaux solaires", quantite: 10, prixUnitaire: 230.00, description: "Panneaux photovoltaïques" }] },
+  { id: 4, reference: "ACH-2026-004", fournisseur: "Office Supply Premium", date: "2026-06-20", montant: 850.00, statut: "Partiel", articles: [{ nom: "Fournitures bureau", quantite: 50, prixUnitaire: 17.00, description: "Papier, stylos, classeurs" }] }
 ];
 
 export const initialBonsCommande = [
-  { id: 1, numero: "BC-2026-001", fournisseur: "Somme Matériels", date: "2026-06-01", statut: "Livré" },
-  { id: 2, numero: "BC-2026-002", fournisseur: "DistriData Systems", date: "2026-06-07", statut: "Livré" },
-  { id: 3, numero: "BC-2026-003", fournisseur: "Energy & Co", date: "2026-06-12", statut: "Validé" },
-  { id: 4, numero: "BC-2026-004", fournisseur: "Office Supply Premium", date: "2026-06-19", statut: "En attente" }
+  { id: 1, numero: "BC-2026-001", fournisseur: "Somme Matériels", date: "2026-06-01", statut: "Livré", montant: 4500.00, delaiLivraison: "3 jours", modeTransport: "Camion", articles: [{ nom: "Matériaux construction", quantite: 100 }], priorite: "Haute", conditionsPaiement: "30 jours", adresseLivraison: "75 Avenue de la République, Paris", contactPersonne: "Jean Dupont", dateLivraisonPrevue: "2026-06-04", notes: "Livraison à l'entrepôt principal" },
+  { id: 2, numero: "BC-2026-002", fournisseur: "DistriData Systems", date: "2026-06-07", statut: "Livré", montant: 9800.00, delaiLivraison: "5 jours", modeTransport: "Express", articles: [{ nom: "Serveurs Dell PowerEdge", quantite: 2 }], priorite: "Urgente", conditionsPaiement: "15 jours", adresseLivraison: "45 Avenue des Champs-Élysées, Paris", contactPersonne: "Marie Martin", dateLivraisonPrevue: "2026-06-12", notes: "Installation requise par le fournisseur" },
+  { id: 3, numero: "BC-2026-003", fournisseur: "Energy & Co", date: "2026-06-12", statut: "Validé", montant: 2300.00, delaiLivraison: "7 jours", modeTransport: "Standard", articles: [{ nom: "Panneaux solaires", quantite: 10 }], priorite: "Normale", conditionsPaiement: "45 jours", adresseLivraison: "88 Boulevard Baille, Marseille", contactPersonne: "Pierre Bernard", dateLivraisonPrevue: "2026-06-19", notes: "Matériel fragile - manipulation avec soin" },
+  { id: 4, numero: "BC-2026-004", fournisseur: "Office Supply Premium", date: "2026-06-19", statut: "En attente", montant: 850.00, delaiLivraison: "2 jours", modeTransport: "Colis", articles: [{ nom: "Fournitures bureau", quantite: 50 }], priorite: "Basse", conditionsPaiement: "30 jours", adresseLivraison: "102 Rue de la Liberté, Lille", contactPersonne: "Sophie Petit", dateLivraisonPrevue: "2026-06-21", notes: "Livraison bureau standard" }
 ];
 
 export const initialFacturesAchat = [
@@ -46,12 +46,12 @@ export const initialFacturesAchat = [
 ];
 
 export const initialDevis = [
-  { id: 1, numero: "DEV-2026-001", client: "Acme Corporation", montant: 15000.00, date: "2026-06-01", statut: "Accepté" },
-  { id: 2, numero: "DEV-2026-002", client: "Global Tech Solutions", montant: 5000.00, date: "2026-06-05", statut: "Accepté" },
-  { id: 3, numero: "DEV-2026-003", client: "Espace Digital SARL", montant: 3200.00, date: "2026-06-10", statut: "En attente" },
-  { id: 4, numero: "DEV-2026-004", client: "Novatech", montant: 8000.00, date: "2026-06-12", statut: "Accepté" },
-  { id: 5, numero: "DEV-2026-005", client: "BTP Construction Plus", montant: 14000.00, date: "2026-06-18", statut: "Refusé" },
-  { id: 6, numero: "DEV-2026-006", client: "Acme Corporation", montant: 4500.00, date: "2026-06-22", statut: "En attente" }
+  { id: 1, numero: "DEV-2026-001", client: "Acme Corporation", montant: 15000.00, date: "2026-06-01", statut: "Accepté", surface: 250, lineaire: 50, metrage: 100, typeProjet: "Rénovation", description: "Travaux de rénovation complète" },
+  { id: 2, numero: "DEV-2026-002", client: "Global Tech Solutions", montant: 5000.00, date: "2026-06-05", statut: "Accepté", surface: 120, lineaire: 30, metrage: 45, typeProjet: "Installation", description: "Installation réseau informatique" },
+  { id: 3, numero: "DEV-2026-003", client: "Espace Digital SARL", montant: 3200.00, date: "2026-06-10", statut: "En attente", surface: 80, lineaire: 20, metrage: 35, typeProjet: "Maintenance", description: "Maintenance préventive" },
+  { id: 4, numero: "DEV-2026-004", client: "Novatech", montant: 8000.00, date: "2026-06-12", statut: "Accepté", surface: 180, lineaire: 40, metrage: 75, typeProjet: "Construction", description: "Construction bureau" },
+  { id: 5, numero: "DEV-2026-005", client: "BTP Construction Plus", montant: 14000.00, date: "2026-06-18", statut: "Refusé", surface: 300, lineaire: 60, metrage: 120, typeProjet: "Extension", description: "Extension bâtiment" },
+  { id: 6, numero: "DEV-2026-006", client: "Acme Corporation", montant: 4500.00, date: "2026-06-22", statut: "En attente", surface: 90, lineaire: 25, metrage: 40, typeProjet: "Réparation", description: "Réparation façade" }
 ];
 
 export const initialCommandes = [

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { Plus, Search, FileText, Download, Building, Phone, Mail, MapPin, Filter } from "lucide-react";
+import { Plus, Search, FileText, Download, Building, Phone, Mail, MapPin, Filter, Eye, Calendar, Truck, User, AlertCircle } from "lucide-react";
 
 export default function Achats() {
   const {
@@ -16,6 +16,7 @@ export default function Achats() {
   const [activeTab, setActiveTab] = useState("achats");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState(null);
+  const [selectedBonDetails, setSelectedBonDetails] = useState(null);
 
   // Filter States for Achats
   const [selectedFournisseur, setSelectedFournisseur] = useState("Tous");
@@ -23,9 +24,15 @@ export default function Achats() {
 
   // New purchase form state
   const [fournisseur, setFournisseur] = useState(fournisseurs[0]?.nom || "");
+  const [fournisseurNom, setFournisseurNom] = useState("");
+  const [matriculeFiscale, setMatriculeFiscale] = useState("");
   const [montant, setMontant] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [statut, setStatut] = useState("En attente");
+  const [articleNom, setArticleNom] = useState("");
+  const [articleQuantite, setArticleQuantite] = useState("");
+  const [articlePrixUnitaire, setArticlePrixUnitaire] = useState("");
+  const [articleDescription, setArticleDescription] = useState("");
 
   const handleCreateAchat = (e) => {
     e.preventDefault();
@@ -33,11 +40,33 @@ export default function Achats() {
       alert("Veuillez saisir un montant valide.");
       return;
     }
-    addAchatRecord({ fournisseur, montant, date, statut });
+    const selectedFournisseur = fournisseurs.find(f => f.nom === fournisseur);
+    const articles = articleNom ? [{
+      nom: articleNom,
+      quantite: parseInt(articleQuantite) || 1,
+      prixUnitaire: parseFloat(articlePrixUnitaire) || 0,
+      description: articleDescription
+    }] : [];
+    
+    addAchatRecord({ 
+      fournisseur, 
+      montant, 
+      date, 
+      statut,
+      fournisseurNom: fournisseurNom || selectedFournisseur?.nom || "",
+      matriculeFiscale: matriculeFiscale || selectedFournisseur?.matriculeFiscale || "",
+      articles
+    });
     setIsModalOpen(false);
     // Reset form
     setMontant("");
     setStatut("En attente");
+    setFournisseurNom("");
+    setMatriculeFiscale("");
+    setArticleNom("");
+    setArticleQuantite("");
+    setArticlePrixUnitaire("");
+    setArticleDescription("");
   };
 
   // Filter listings based on global search query
@@ -248,13 +277,17 @@ export default function Achats() {
                 <Th>Numéro Bon</Th>
                 <Th>Fournisseur</Th>
                 <Th>Date d'émission</Th>
+                <Th>Priorité</Th>
+                <th>Date Livraison</th>
+                <th>Montant</th>
                 <Th>Statut Livraison</Th>
+                <th className="text-center">Détails</th>
               </Tr>
             </THead>
             <TBody>
               {filteredBc.length === 0 ? (
                 <Tr>
-                  <Td colSpan={4} className="text-center py-8 text-muted-foreground">Aucun bon de commande.</Td>
+                  <Td colSpan={8} className="text-center py-8 text-muted-foreground">Aucun bon de commande.</Td>
                 </Tr>
               ) : (
                 filteredBc.map((bc) => (
@@ -262,7 +295,28 @@ export default function Achats() {
                     <Td className="font-bold text-foreground">{bc.numero}</Td>
                     <Td className="font-medium">{bc.fournisseur}</Td>
                     <Td className="text-muted-foreground">{bc.date}</Td>
+                    <Td>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
+                        bc.priorite === "Urgente" ? "bg-rose-500/10 text-rose-600" :
+                        bc.priorite === "Haute" ? "bg-amber-500/10 text-amber-600" :
+                        bc.priorite === "Normale" ? "bg-blue-500/10 text-blue-600" :
+                        "bg-slate-500/10 text-slate-600"
+                      }`}>
+                        {bc.priorite}
+                      </span>
+                    </Td>
+                    <Td className="text-xs text-muted-foreground">{bc.dateLivraisonPrevue || "-"}</Td>
+                    <Td className="font-semibold text-right sm:text-left">{bc.montant?.toLocaleString("fr-FR", { minimumFractionDigits: 2 }) || "-"} €</Td>
                     <Td><Badge status={bc.statut} /></Td>
+                    <Td className="text-center">
+                      <button
+                        onClick={() => setSelectedBonDetails(bc)}
+                        className="p-1.5 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 rounded-lg transition-colors"
+                        title="Voir les détails"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </Td>
                   </Tr>
                 ))
               )}
@@ -326,13 +380,91 @@ export default function Achats() {
             <label className="block font-semibold mb-1 text-muted-foreground">Fournisseur</label>
             <select
               value={fournisseur}
-              onChange={(e) => setFournisseur(e.target.value)}
+              onChange={(e) => {
+                setFournisseur(e.target.value);
+                const selected = fournisseurs.find(f => f.nom === e.target.value);
+                if (selected) {
+                  setFournisseurNom(selected.nom);
+                  setMatriculeFiscale(selected.matriculeFiscale || "");
+                }
+              }}
               className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
             >
               {fournisseurs.map((f) => (
                 <option key={f.id} value={f.nom}>{f.nom}</option>
               ))}
             </select>
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-muted-foreground">Nom du Fournisseur</label>
+            <input
+              type="text"
+              placeholder="Nom complet du fournisseur"
+              value={fournisseurNom}
+              onChange={(e) => setFournisseurNom(e.target.value)}
+              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-muted-foreground">Matricule Fiscale</label>
+            <input
+              type="text"
+              placeholder="Ex: FR12345678901"
+              value={matriculeFiscale}
+              onChange={(e) => setMatriculeFiscale(e.target.value)}
+              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+            />
+          </div>
+
+          <div className="border-t border-border pt-4">
+            <h4 className="font-bold text-foreground mb-3">Détails de l'article</h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Nom de l'article</label>
+                <input
+                  type="text"
+                  placeholder="Ex: Matériaux construction"
+                  value={articleNom}
+                  onChange={(e) => setArticleNom(e.target.value)}
+                  className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-semibold mb-1 text-muted-foreground">Quantité</label>
+                  <input
+                    type="number"
+                    placeholder="Ex: 100"
+                    value={articleQuantite}
+                    onChange={(e) => setArticleQuantite(e.target.value)}
+                    className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                  />
+                </div>
+                <div>
+                  <label className="block font-semibold mb-1 text-muted-foreground">Prix Unitaire (€)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Ex: 45.00"
+                    value={articlePrixUnitaire}
+                    onChange={(e) => setArticlePrixUnitaire(e.target.value)}
+                    className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Description</label>
+                <textarea
+                  placeholder="Description détaillée de l'article"
+                  value={articleDescription}
+                  onChange={(e) => setArticleDescription(e.target.value)}
+                  rows="2"
+                  className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none resize-none"
+                />
+              </div>
+            </div>
           </div>
 
           <div>
@@ -388,6 +520,125 @@ export default function Achats() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Bon de Commande Details Modal */}
+      <Modal isOpen={!!selectedBonDetails} onClose={() => setSelectedBonDetails(null)} title={`Détails Bon de Commande : ${selectedBonDetails?.numero}`}>
+        {selectedBonDetails && (
+          <div className="space-y-4 text-xs">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <Building className="h-4 w-4" />
+                  <span className="font-semibold">Fournisseur</span>
+                </div>
+                <p className="font-bold text-foreground">{selectedBonDetails.fournisseur}</p>
+              </div>
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="font-semibold">Priorité</span>
+                </div>
+                <span className={`font-bold px-2 py-0.5 rounded ${
+                  selectedBonDetails.priorite === "Urgente" ? "bg-rose-500/10 text-rose-600" :
+                  selectedBonDetails.priorite === "Haute" ? "bg-amber-500/10 text-amber-600" :
+                  selectedBonDetails.priorite === "Normale" ? "bg-blue-500/10 text-blue-600" :
+                  "bg-slate-500/10 text-slate-600"
+                }`}>
+                  {selectedBonDetails.priorite}
+                </span>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <Calendar className="h-4 w-4" />
+                  <span className="font-semibold">Date d'émission</span>
+                </div>
+                <p className="font-semibold">{selectedBonDetails.date}</p>
+              </div>
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <Calendar className="h-4 w-4" />
+                  <span className="font-semibold">Date livraison prévue</span>
+                </div>
+                <p className="font-semibold">{selectedBonDetails.dateLivraisonPrevue || "Non définie"}</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <Truck className="h-4 w-4" />
+                  <span className="font-semibold">Mode de transport</span>
+                </div>
+                <p className="font-semibold">{selectedBonDetails.modeTransport}</p>
+              </div>
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <span className="font-semibold">Délai de livraison</span>
+                </div>
+                <p className="font-semibold">{selectedBonDetails.delaiLivraison}</p>
+              </div>
+            </div>
+
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <User className="h-4 w-4" />
+                <span className="font-semibold">Contact personne</span>
+              </div>
+              <p className="font-semibold">{selectedBonDetails.contactPersonne || "Non spécifié"}</p>
+            </div>
+
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <MapPin className="h-4 w-4" />
+                <span className="font-semibold">Adresse de livraison</span>
+              </div>
+              <p className="font-semibold">{selectedBonDetails.adresseLivraison || "Non spécifiée"}</p>
+            </div>
+
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <span className="font-semibold">Conditions de paiement</span>
+              </div>
+              <p className="font-semibold">{selectedBonDetails.conditionsPaiement || "Non spécifiées"}</p>
+            </div>
+
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <span className="font-semibold">Montant</span>
+              </div>
+              <p className="font-bold text-lg text-foreground">{selectedBonDetails.montant?.toLocaleString("fr-FR", { minimumFractionDigits: 2 }) || "-"} €</p>
+            </div>
+
+            {selectedBonDetails.articles && selectedBonDetails.articles.length > 0 && (
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <span className="font-semibold">Articles</span>
+                </div>
+                <div className="space-y-2">
+                  {selectedBonDetails.articles.map((article, idx) => (
+                    <div key={idx} className="bg-card p-2 rounded border border-border/50">
+                      <p className="font-bold">{article.nom}</p>
+                      <p className="text-muted-foreground">Quantité: {article.quantite}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {selectedBonDetails.notes && (
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <span className="font-semibold">Notes</span>
+                </div>
+                <p className="text-muted-foreground">{selectedBonDetails.notes}</p>
+              </div>
+            )}
+          </div>
+        )}
       </Modal>
 
       {/* PDF View Modal Simulation */}

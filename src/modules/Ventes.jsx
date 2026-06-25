@@ -1,13 +1,14 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp } from "lucide-react";
+import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter } from "lucide-react";
 
 export default function Ventes() {
   const {
     ventes,
     clients,
     devis,
+    commandes,
     searchQuery,
     addVenteRecord,
     addDevisRecord,
@@ -17,6 +18,11 @@ export default function Ventes() {
   const [activeTab, setActiveTab] = useState("ventes");
   const [modalType, setModalType] = useState(null); // 'vente', 'devis', or null
   const [selectedVentePdf, setSelectedVentePdf] = useState(null);
+  const [selectedClientHistory, setSelectedClientHistory] = useState(null);
+  
+  // Client filtering states
+  const [clientNameFilter, setClientNameFilter] = useState("");
+  const [clientDateFilter, setClientDateFilter] = useState("");
 
   // Form states
   const [client, setClient] = useState(clients[0]?.nom || "");
@@ -28,6 +34,11 @@ export default function Ventes() {
   const [devisMontant, setDevisMontant] = useState("");
   const [devisDate, setDevisDate] = useState(new Date().toISOString().split("T")[0]);
   const [devisStatut, setDevisStatut] = useState("En attente");
+  const [devisSurface, setDevisSurface] = useState("");
+  const [devisLineaire, setDevisLineaire] = useState("");
+  const [devisMetrage, setDevisMetrage] = useState("");
+  const [devisTypeProjet, setDevisTypeProjet] = useState("");
+  const [devisDescription, setDevisDescription] = useState("");
 
   const handleCreateVente = (e) => {
     e.preventDefault();
@@ -47,10 +58,25 @@ export default function Ventes() {
       alert("Veuillez saisir un montant de devis valide.");
       return;
     }
-    addDevisRecord({ client: devisClient, montant: devisMontant, date: devisDate, statut: devisStatut });
+    addDevisRecord({ 
+      client: devisClient, 
+      montant: devisMontant, 
+      date: devisDate, 
+      statut: devisStatut,
+      surface: parseFloat(devisSurface) || 0,
+      lineaire: parseFloat(devisLineaire) || 0,
+      metrage: parseFloat(devisMetrage) || 0,
+      typeProjet: devisTypeProjet,
+      description: devisDescription
+    });
     setModalType(null);
     setDevisMontant("");
     setDevisStatut("En attente");
+    setDevisSurface("");
+    setDevisLineaire("");
+    setDevisMetrage("");
+    setDevisTypeProjet("");
+    setDevisDescription("");
   };
 
   // Filter listings based on global search query
@@ -64,10 +90,15 @@ export default function Ventes() {
   );
 
   const filteredClients = clients.filter(
-    (c) =>
-      c.nom.toLowerCase().includes(query) ||
-      c.email.toLowerCase().includes(query) ||
-      c.telephone.includes(query)
+    (c) => {
+      const matchQuery =
+        c.nom.toLowerCase().includes(query) ||
+        c.email.toLowerCase().includes(query) ||
+        c.telephone.includes(query);
+      const matchName = !clientNameFilter || c.nom.toLowerCase().includes(clientNameFilter.toLowerCase());
+      const matchDate = !clientDateFilter || true; // Date filter would need client creation date in data
+      return matchQuery && matchName && matchDate;
+    }
   );
 
   const filteredDevis = devis.filter(
@@ -173,10 +204,30 @@ export default function Ventes() {
         )}
 
         {activeTab === "clients" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {filteredClients.length === 0 ? (
-              <div className="col-span-full text-center py-8 text-muted-foreground bg-card border border-border rounded-xl">Aucun client trouvé.</div>
-            ) : (
+          <div className="space-y-4">
+            {/* Client filters */}
+            <div className="flex flex-wrap items-center gap-4 bg-card border border-border/80 p-4 rounded-xl shadow-sm text-xs">
+              <div className="flex items-center space-x-2">
+                <Filter className="w-4 h-4 text-muted-foreground" />
+                <span className="font-bold text-foreground">Filtres :</span>
+              </div>
+              
+              <div className="flex items-center space-x-1 bg-secondary px-2 py-1 rounded-lg">
+                <span className="text-muted-foreground font-semibold">Nom :</span>
+                <input
+                  type="text"
+                  placeholder="Filtrer par nom..."
+                  value={clientNameFilter}
+                  onChange={(e) => setClientNameFilter(e.target.value)}
+                  className="bg-transparent text-foreground font-bold focus:outline-none placeholder-muted-foreground/60 w-32"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredClients.length === 0 ? (
+                <div className="col-span-full text-center py-8 text-muted-foreground bg-card border border-border rounded-xl">Aucun client trouvé.</div>
+              ) : (
               filteredClients.map((c) => (
                 <Card key={c.id} className="flex flex-col justify-between" hoverable>
                   <div>
@@ -209,9 +260,19 @@ export default function Ventes() {
                       </div>
                     </div>
                   </div>
+                  <div className="mt-4 pt-3 border-t border-border/50">
+                    <button
+                      onClick={() => setSelectedClientHistory(c)}
+                      className="w-full py-2 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 font-semibold rounded-lg transition-colors text-xs flex items-center justify-center space-x-2 cursor-pointer"
+                    >
+                      <History className="h-3.5 w-3.5" />
+                      <span>Voir l'historique</span>
+                    </button>
+                  </div>
                 </Card>
               ))
-            )}
+              )}
+            </div>
           </div>
         )}
 
@@ -222,6 +283,10 @@ export default function Ventes() {
                 <Th>Numéro Devis</Th>
                 <Th>Client</Th>
                 <Th>Date</Th>
+                <th>Surface (m²)</th>
+                <th>Linéaire (m)</th>
+                <th>Métrage (m)</th>
+                <th>Type Projet</th>
                 <Th>Montant Estimé</Th>
                 <Th>Statut</Th>
               </Tr>
@@ -229,7 +294,7 @@ export default function Ventes() {
             <TBody>
               {filteredDevis.length === 0 ? (
                 <Tr>
-                  <Td colSpan={5} className="text-center py-8 text-muted-foreground">Aucun devis disponible.</Td>
+                  <Td colSpan={9} className="text-center py-8 text-muted-foreground">Aucun devis disponible.</Td>
                 </Tr>
               ) : (
                 filteredDevis.map((d) => (
@@ -237,6 +302,10 @@ export default function Ventes() {
                     <Td className="font-bold text-foreground">{d.numero}</Td>
                     <Td className="font-medium">{d.client}</Td>
                     <Td className="text-muted-foreground">{d.date}</Td>
+                    <Td className="text-xs text-muted-foreground">{d.surface || "-"}</Td>
+                    <Td className="text-xs text-muted-foreground">{d.lineaire || "-"}</Td>
+                    <Td className="text-xs text-muted-foreground">{d.metrage || "-"}</Td>
+                    <Td className="text-xs text-muted-foreground">{d.typeProjet || "-"}</Td>
                     <Td className="font-semibold text-right sm:text-left">{d.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</Td>
                     <Td><Badge status={d.statut} /></Td>
                   </Tr>
@@ -382,6 +451,70 @@ export default function Ventes() {
             </select>
           </div>
 
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="block font-semibold mb-1 text-muted-foreground">Surface (m²)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 250"
+                value={devisSurface}
+                onChange={(e) => setDevisSurface(e.target.value)}
+                className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1 text-muted-foreground">Linéaire (m)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 50"
+                value={devisLineaire}
+                onChange={(e) => setDevisLineaire(e.target.value)}
+                className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+              />
+            </div>
+            <div>
+              <label className="block font-semibold mb-1 text-muted-foreground">Métrage (m)</label>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Ex: 100"
+                value={devisMetrage}
+                onChange={(e) => setDevisMetrage(e.target.value)}
+                className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-muted-foreground">Type de Projet</label>
+            <select
+              value={devisTypeProjet}
+              onChange={(e) => setDevisTypeProjet(e.target.value)}
+              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+            >
+              <option value="">Sélectionner...</option>
+              <option value="Rénovation">Rénovation</option>
+              <option value="Construction">Construction</option>
+              <option value="Installation">Installation</option>
+              <option value="Maintenance">Maintenance</option>
+              <option value="Extension">Extension</option>
+              <option value="Réparation">Réparation</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-muted-foreground">Description du projet</label>
+            <textarea
+              placeholder="Description détaillée du projet..."
+              value={devisDescription}
+              onChange={(e) => setDevisDescription(e.target.value)}
+              rows="3"
+              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none resize-none"
+            />
+          </div>
+
           <div>
             <label className="block font-semibold mb-1 text-muted-foreground">Montant estimatif HT (€)</label>
             <input
@@ -435,6 +568,73 @@ export default function Ventes() {
             </button>
           </div>
         </form>
+      </Modal>
+
+      {/* Client Historique Modal */}
+      <Modal isOpen={!!selectedClientHistory} onClose={() => setSelectedClientHistory(null)} title={`Historique - ${selectedClientHistory?.nom}`}>
+        {selectedClientHistory && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <Clock className="h-4 w-4" />
+                <span className="font-semibold">Actions récentes pour ce client</span>
+              </div>
+              <div className="space-y-2">
+                {/* Simulated client history based on ventes, devis, and commandes */}
+                {ventes.filter(v => v.client === selectedClientHistory.nom).map((v) => (
+                  <div key={v.id} className="bg-card p-2 rounded border border-border/50">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-bold text-indigo-600">{v.facture}</span>
+                        <span className="text-muted-foreground ml-2">Vente</span>
+                      </div>
+                      <span className="text-muted-foreground">{v.date}</span>
+                    </div>
+                    <div className="mt-1 text-muted-foreground">
+                      Montant: {v.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} € - Statut: {v.statut}
+                    </div>
+                  </div>
+                ))}
+                {devis.filter(d => d.client === selectedClientHistory.nom).map((d) => (
+                  <div key={d.id} className="bg-card p-2 rounded border border-border/50">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-bold text-foreground">{d.numero}</span>
+                        <span className="text-muted-foreground ml-2">Devis</span>
+                      </div>
+                      <span className="text-muted-foreground">{d.date}</span>
+                    </div>
+                    <div className="mt-1 text-muted-foreground">
+                      Montant: {d.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} € - Statut: {d.statut}
+                      {d.surface && <span className="ml-2">- Surface: {d.surface}m²</span>}
+                    </div>
+                  </div>
+                ))}
+                {commandes.filter(cmd => cmd.client === selectedClientHistory.nom).map((cmd) => (
+                  <div key={cmd.id} className="bg-card p-2 rounded border border-border/50">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <span className="font-bold text-foreground">{cmd.numero}</span>
+                        <span className="text-muted-foreground ml-2">Commande</span>
+                      </div>
+                      <span className="text-muted-foreground">{cmd.date}</span>
+                    </div>
+                    <div className="mt-1 text-muted-foreground">
+                      Montant: {cmd.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} € - État: {cmd.etat}
+                    </div>
+                  </div>
+                ))}
+                {ventes.filter(v => v.client === selectedClientHistory.nom).length === 0 && 
+                 devis.filter(d => d.client === selectedClientHistory.nom).length === 0 && 
+                 commandes.filter(cmd => cmd.client === selectedClientHistory.nom).length === 0 && (
+                  <div className="text-center py-4 text-muted-foreground">
+                    Aucune action enregistrée pour ce client.
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </Modal>
 
       {/* PDF View Modal Simulation */}
