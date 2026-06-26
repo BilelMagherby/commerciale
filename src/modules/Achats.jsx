@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { Plus, Search, FileText, Download, Building, Phone, Mail, MapPin, Filter, Eye, Calendar, Truck, User, AlertCircle } from "lucide-react";
+import { Plus, Search, FileText, Download, Building, Phone, Mail, MapPin, Filter, Eye, Calendar, Truck, User, AlertCircle, Printer, DollarSign, CheckCircle, Package } from "lucide-react";
 
 export default function Achats() {
   const {
@@ -17,6 +17,13 @@ export default function Achats() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState(null);
   const [selectedBonDetails, setSelectedBonDetails] = useState(null);
+  const [selectedAchatDetails, setSelectedAchatDetails] = useState(null);
+  const [selectedFournisseurDetails, setSelectedFournisseurDetails] = useState(null);
+  const [selectedFactureDetails, setSelectedFactureDetails] = useState(null);
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   // Filter States for Achats
   const [selectedFournisseur, setSelectedFournisseur] = useState("Tous");
@@ -126,13 +133,23 @@ export default function Achats() {
             Gérez vos commandes fournisseurs, factures de frais et catalogues partenaires.
           </p>
         </div>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs px-4 py-2.5 rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition-all duration-150 active:scale-95 cursor-pointer self-start sm:self-auto"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Nouvel Achat</span>
-        </button>
+        <div className="flex items-center gap-3 self-start sm:self-auto">
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="inline-flex items-center justify-center space-x-2 bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs px-4 py-2.5 rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition-all duration-150 active:scale-95 cursor-pointer"
+          >
+            <Plus className="h-4 w-4" />
+            <span>Nouvel Achat</span>
+          </button>
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center justify-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-4 py-2.5 rounded-xl border border-border transition-all duration-150 cursor-pointer"
+            title="Imprimer"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer</span>
+          </button>
+        </div>
       </div>
 
       {/* Tabs list bar */}
@@ -200,12 +217,13 @@ export default function Achats() {
                   <Th>Date d'enregistrement</Th>
                   <Th>Montant Net</Th>
                   <Th>Statut</Th>
+                  <th className="text-center">Détails</th>
                 </Tr>
               </THead>
               <TBody>
                 {filteredAchats.length === 0 ? (
                   <Tr>
-                    <Td colSpan={5} className="text-center py-8 text-muted-foreground">Aucun achat trouvé.</Td>
+                    <Td colSpan={6} className="text-center py-8 text-muted-foreground">Aucun achat trouvé.</Td>
                   </Tr>
                 ) : (
                   filteredAchats.map((a) => (
@@ -215,6 +233,15 @@ export default function Achats() {
                       <Td className="text-muted-foreground">{a.date}</Td>
                       <Td className="font-semibold text-right sm:text-left">{a.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</Td>
                       <Td><Badge status={a.statut} /></Td>
+                      <Td className="text-center">
+                        <button 
+                          onClick={() => setSelectedAchatDetails(a)}
+                          className="p-1.5 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 rounded-lg transition-colors cursor-pointer"
+                          title="Voir les détails"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </button>
+                      </Td>
                     </Tr>
                   ))
                 )}
@@ -263,6 +290,15 @@ export default function Achats() {
                         <span className="truncate">{f.adresse}</span>
                       </div>
                     </div>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-border/50">
+                    <button
+                      onClick={() => setSelectedFournisseurDetails(f)}
+                      className="w-full py-2 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 font-semibold rounded-lg transition-colors text-xs flex items-center justify-center space-x-2 cursor-pointer"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span>Voir détails</span>
+                    </button>
                   </div>
                 </Card>
               ))
@@ -332,13 +368,14 @@ export default function Achats() {
                 <Th>Fournisseur</Th>
                 <Th>Montant TTC</Th>
                 <Th>Date</Th>
+                <Th className="text-center">Détails</Th>
                 <Th className="text-center">Action PDF</Th>
               </Tr>
             </THead>
             <TBody>
               {filteredFa.length === 0 ? (
                 <Tr>
-                  <Td colSpan={5} className="text-center py-8 text-muted-foreground">Aucune facture enregistrée.</Td>
+                  <Td colSpan={6} className="text-center py-8 text-muted-foreground">Aucune facture enregistrée.</Td>
                 </Tr>
               ) : (
                 filteredFa.map((fa) => (
@@ -347,6 +384,15 @@ export default function Achats() {
                     <Td className="font-medium">{fa.fournisseur}</Td>
                     <Td className="font-bold">{fa.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</Td>
                     <Td className="text-muted-foreground">{fa.date || "2026-06-20"}</Td>
+                    <Td className="text-center">
+                      <button
+                        onClick={() => setSelectedFactureDetails(fa)}
+                        className="p-1.5 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 rounded-lg transition-colors cursor-pointer"
+                        title="Voir les détails"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </Td>
                     <Td className="text-center">
                       <div className="flex items-center justify-center space-x-2">
                         <button
@@ -639,6 +685,243 @@ export default function Achats() {
             )}
           </div>
         )}
+      </Modal>
+
+      {/* Purchase Details Modal */}
+      <Modal isOpen={!!selectedAchatDetails} onClose={() => setSelectedAchatDetails(null)} title={`Détails Achat : ${selectedAchatDetails?.reference}`}>
+        {selectedAchatDetails && (() => {
+          const fournisseur = fournisseurs.find(f => f.nom === selectedAchatDetails.fournisseur);
+          return (
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Building className="h-4 w-4" />
+                    <span className="font-semibold">Fournisseur</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedAchatDetails.fournisseur}</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <FileText className="h-4 w-4" />
+                    <span className="font-semibold">Référence</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedAchatDetails.reference}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-semibold">Date d'enregistrement</span>
+                  </div>
+                  <p className="font-semibold text-foreground">{selectedAchatDetails.date}</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-semibold">Montant Net</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedAchatDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                </div>
+              </div>
+
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-semibold">Statut</span>
+                </div>
+                <Badge status={selectedAchatDetails.statut} />
+              </div>
+
+              {fournisseur && (
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Building className="h-4 w-4" />
+                    <span className="font-semibold">Informations Fournisseur</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{fournisseur.telephone}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{fournisseur.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground truncate">{fournisseur.adresse}</span>
+                    </div>
+                    {fournisseur.matriculeFiscale && (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">Matricule: {fournisseur.matriculeFiscale}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {selectedAchatDetails.articles && selectedAchatDetails.articles.length > 0 && (
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Package className="h-4 w-4" />
+                    <span className="font-semibold">Articles</span>
+                  </div>
+                  <div className="space-y-2">
+                    {selectedAchatDetails.articles.map((article, idx) => (
+                      <div key={idx} className="border-l-2 border-indigo-500 pl-3 py-1">
+                        <p className="font-semibold text-foreground">{article.nom}</p>
+                        <p className="text-muted-foreground">Quantité: {article.quantite}</p>
+                        {article.prixUnitaire && (
+                          <p className="text-muted-foreground">Prix unitaire: {article.prixUnitaire.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                        )}
+                        {article.description && (
+                          <p className="text-muted-foreground text-[10px] italic">{article.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </Modal>
+
+      {/* Fournisseur Details Modal */}
+      <Modal isOpen={!!selectedFournisseurDetails} onClose={() => setSelectedFournisseurDetails(null)} title={`Détails Fournisseur : ${selectedFournisseurDetails?.nom}`}>
+        {selectedFournisseurDetails && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <Building className="h-4 w-4" />
+                <span className="font-semibold">Nom du fournisseur</span>
+              </div>
+              <p className="font-bold text-foreground">{selectedFournisseurDetails.nom}</p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <Phone className="h-4 w-4" />
+                  <span className="font-semibold">Téléphone</span>
+                </div>
+                <p className="font-semibold text-foreground">{selectedFournisseurDetails.telephone}</p>
+              </div>
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <Mail className="h-4 w-4" />
+                  <span className="font-semibold">Email</span>
+                </div>
+                <p className="font-semibold text-foreground">{selectedFournisseurDetails.email}</p>
+              </div>
+            </div>
+
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <MapPin className="h-4 w-4" />
+                <span className="font-semibold">Adresse</span>
+              </div>
+              <p className="font-semibold text-foreground">{selectedFournisseurDetails.adresse}</p>
+            </div>
+
+            {selectedFournisseurDetails.matriculeFiscale && (
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="font-semibold">Matricule Fiscale</span>
+                </div>
+                <p className="font-semibold text-foreground">{selectedFournisseurDetails.matriculeFiscale}</p>
+              </div>
+            )}
+
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <DollarSign className="h-4 w-4" />
+                <span className="font-semibold">Solde Dû</span>
+              </div>
+              <p className={`font-bold text-lg ${selectedFournisseurDetails.solde > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                {selectedFournisseurDetails.solde.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+              </p>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Facture Details Modal */}
+      <Modal isOpen={!!selectedFactureDetails} onClose={() => setSelectedFactureDetails(null)} title={`Détails Facture : ${selectedFactureDetails?.numero}`}>
+        {selectedFactureDetails && (() => {
+          const fournisseur = fournisseurs.find(f => f.nom === selectedFactureDetails.fournisseur);
+          return (
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <FileText className="h-4 w-4" />
+                    <span className="font-semibold">Numéro Facture</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedFactureDetails.numero}</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Building className="h-4 w-4" />
+                    <span className="font-semibold">Fournisseur</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedFactureDetails.fournisseur}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-semibold">Date</span>
+                  </div>
+                  <p className="font-semibold text-foreground">{selectedFactureDetails.date || "2026-06-20"}</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-semibold">Montant TTC</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedFactureDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                </div>
+              </div>
+
+              {fournisseur && (
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Building className="h-4 w-4" />
+                    <span className="font-semibold">Informations Fournisseur</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{fournisseur.telephone}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{fournisseur.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground truncate">{fournisseur.adresse}</span>
+                    </div>
+                    {fournisseur.matriculeFiscale && (
+                      <div className="flex items-center space-x-2">
+                        <FileText className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">Matricule: {fournisseur.matriculeFiscale}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </Modal>
 
       {/* PDF View Modal Simulation */}

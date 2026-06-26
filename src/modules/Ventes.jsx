@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter } from "lucide-react";
+import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter, Printer, Eye, DollarSign, Calendar, Package, Mail } from "lucide-react";
 
 export default function Ventes() {
   const {
@@ -19,10 +19,17 @@ export default function Ventes() {
   const [modalType, setModalType] = useState(null); // 'vente', 'devis', or null
   const [selectedVentePdf, setSelectedVentePdf] = useState(null);
   const [selectedClientHistory, setSelectedClientHistory] = useState(null);
+  const [selectedVenteDetails, setSelectedVenteDetails] = useState(null);
+  const [selectedHistoryAction, setSelectedHistoryAction] = useState(null);
+  const [selectedDevisDetails, setSelectedDevisDetails] = useState(null);
   
   // Client filtering states
   const [clientNameFilter, setClientNameFilter] = useState("");
   const [clientDateFilter, setClientDateFilter] = useState("");
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   // Form states
   const [client, setClient] = useState(clients[0]?.nom || "");
@@ -149,6 +156,14 @@ export default function Ventes() {
             <FileUp className="h-4 w-4" />
             <span>Nouvelle Facture</span>
           </button>
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center justify-center space-x-1.5 bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-xs px-3.5 py-2.5 rounded-xl border border-border shadow-sm transition-all active:scale-95 cursor-pointer"
+            title="Imprimer"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer</span>
+          </button>
         </div>
       </div>
 
@@ -181,12 +196,13 @@ export default function Ventes() {
                 <Th>Date d'émission</Th>
                 <Th>Total TTC</Th>
                 <Th>Statut</Th>
+                <th className="text-center">Détails</th>
               </Tr>
             </THead>
             <TBody>
               {filteredVentes.length === 0 ? (
                 <Tr>
-                  <Td colSpan={5} className="text-center py-8 text-muted-foreground">Aucune vente enregistrée.</Td>
+                  <Td colSpan={6} className="text-center py-8 text-muted-foreground">Aucune vente enregistrée.</Td>
                 </Tr>
               ) : (
                 filteredVentes.map((v) => (
@@ -196,6 +212,15 @@ export default function Ventes() {
                     <Td className="text-muted-foreground">{v.date}</Td>
                     <Td className="font-semibold text-right sm:text-left">{v.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</Td>
                     <Td><Badge status={v.statut} /></Td>
+                    <Td className="text-center">
+                      <button 
+                        onClick={() => setSelectedVenteDetails(v)}
+                        className="p-1.5 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 rounded-lg transition-colors cursor-pointer"
+                        title="Voir les détails"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </Td>
                   </Tr>
                 ))
               )}
@@ -289,12 +314,13 @@ export default function Ventes() {
                 <th>Type Projet</th>
                 <Th>Montant Estimé</Th>
                 <Th>Statut</Th>
+                <th className="text-center">Détails</th>
               </Tr>
             </THead>
             <TBody>
               {filteredDevis.length === 0 ? (
                 <Tr>
-                  <Td colSpan={9} className="text-center py-8 text-muted-foreground">Aucun devis disponible.</Td>
+                  <Td colSpan={10} className="text-center py-8 text-muted-foreground">Aucun devis disponible.</Td>
                 </Tr>
               ) : (
                 filteredDevis.map((d) => (
@@ -308,6 +334,15 @@ export default function Ventes() {
                     <Td className="text-xs text-muted-foreground">{d.typeProjet || "-"}</Td>
                     <Td className="font-semibold text-right sm:text-left">{d.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</Td>
                     <Td><Badge status={d.statut} /></Td>
+                    <Td className="text-center">
+                      <button
+                        onClick={() => setSelectedDevisDetails(d)}
+                        className="p-1.5 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 rounded-lg transition-colors cursor-pointer"
+                        title="Voir les détails"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </Td>
                   </Tr>
                 ))
               )}
@@ -582,7 +617,11 @@ export default function Ventes() {
               <div className="space-y-2">
                 {/* Simulated client history based on ventes, devis, and commandes */}
                 {ventes.filter(v => v.client === selectedClientHistory.nom).map((v) => (
-                  <div key={v.id} className="bg-card p-2 rounded border border-border/50">
+                  <button
+                    key={v.id}
+                    onClick={() => setSelectedHistoryAction({ type: 'vente', data: v })}
+                    className="bg-card p-2 rounded border border-border/50 w-full text-left hover:bg-secondary/50 transition-colors cursor-pointer"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
                         <span className="font-bold text-indigo-600">{v.facture}</span>
@@ -593,10 +632,14 @@ export default function Ventes() {
                     <div className="mt-1 text-muted-foreground">
                       Montant: {v.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} € - Statut: {v.statut}
                     </div>
-                  </div>
+                  </button>
                 ))}
                 {devis.filter(d => d.client === selectedClientHistory.nom).map((d) => (
-                  <div key={d.id} className="bg-card p-2 rounded border border-border/50">
+                  <button
+                    key={d.id}
+                    onClick={() => setSelectedHistoryAction({ type: 'devis', data: d })}
+                    className="bg-card p-2 rounded border border-border/50 w-full text-left hover:bg-secondary/50 transition-colors cursor-pointer"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
                         <span className="font-bold text-foreground">{d.numero}</span>
@@ -608,10 +651,14 @@ export default function Ventes() {
                       Montant: {d.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} € - Statut: {d.statut}
                       {d.surface && <span className="ml-2">- Surface: {d.surface}m²</span>}
                     </div>
-                  </div>
+                  </button>
                 ))}
                 {commandes.filter(cmd => cmd.client === selectedClientHistory.nom).map((cmd) => (
-                  <div key={cmd.id} className="bg-card p-2 rounded border border-border/50">
+                  <button
+                    key={cmd.id}
+                    onClick={() => setSelectedHistoryAction({ type: 'commande', data: cmd })}
+                    className="bg-card p-2 rounded border border-border/50 w-full text-left hover:bg-secondary/50 transition-colors cursor-pointer"
+                  >
                     <div className="flex justify-between items-start">
                       <div>
                         <span className="font-bold text-foreground">{cmd.numero}</span>
@@ -622,7 +669,7 @@ export default function Ventes() {
                     <div className="mt-1 text-muted-foreground">
                       Montant: {cmd.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} € - État: {cmd.etat}
                     </div>
-                  </div>
+                  </button>
                 ))}
                 {ventes.filter(v => v.client === selectedClientHistory.nom).length === 0 && 
                  devis.filter(d => d.client === selectedClientHistory.nom).length === 0 && 
@@ -635,6 +682,430 @@ export default function Ventes() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* History Action Details Modal */}
+      <Modal isOpen={!!selectedHistoryAction} onClose={() => setSelectedHistoryAction(null)} title={`Détails : ${selectedHistoryAction?.type === 'vente' ? selectedHistoryAction.data.facture : selectedHistoryAction?.type === 'devis' ? selectedHistoryAction.data.numero : selectedHistoryAction?.data.numero}`}>
+        {selectedHistoryAction && (() => {
+          const { type, data } = selectedHistoryAction;
+          if (type === 'vente') {
+            const client = clients.find(c => c.nom === data.client);
+            return (
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-semibold">Client</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.client}</p>
+                  </div>
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-semibold">Facture</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.facture}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <Calendar className="h-4 w-4" />
+                      <span className="font-semibold">Date</span>
+                    </div>
+                    <p className="font-semibold text-foreground">{data.date}</p>
+                  </div>
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <DollarSign className="h-4 w-4" />
+                      <span className="font-semibold">Total TTC</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                  </div>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="font-semibold">Statut</span>
+                  </div>
+                  <Badge status={data.statut} />
+                </div>
+                {client && (
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-semibold">Informations Client</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{client.telephone}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{client.email}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground truncate">{client.adresse}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          } else if (type === 'devis') {
+            const client = clients.find(c => c.nom === data.client);
+            return (
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-semibold">Client</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.client}</p>
+                  </div>
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-semibold">Numéro Devis</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.numero}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <Calendar className="h-4 w-4" />
+                      <span className="font-semibold">Date</span>
+                    </div>
+                    <p className="font-semibold text-foreground">{data.date}</p>
+                  </div>
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <DollarSign className="h-4 w-4" />
+                      <span className="font-semibold">Montant</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                  </div>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="font-semibold">Statut</span>
+                  </div>
+                  <Badge status={data.statut} />
+                </div>
+                {(data.surface || data.lineaire || data.metrage || data.typeProjet || data.description) && (
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-semibold">Détails Projet</span>
+                    </div>
+                    <div className="space-y-1">
+                      {data.surface && <p className="text-muted-foreground">Surface: {data.surface} m²</p>}
+                      {data.lineaire && <p className="text-muted-foreground">Linéaire: {data.lineaire} m</p>}
+                      {data.metrage && <p className="text-muted-foreground">Métrage: {data.metrage} m</p>}
+                      {data.typeProjet && <p className="text-muted-foreground">Type: {data.typeProjet}</p>}
+                      {data.description && <p className="text-muted-foreground italic">{data.description}</p>}
+                    </div>
+                  </div>
+                )}
+                {client && (
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-semibold">Informations Client</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{client.telephone}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{client.email}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground truncate">{client.adresse}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          } else if (type === 'commande') {
+            const client = clients.find(c => c.nom === data.client);
+            return (
+              <div className="space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-semibold">Client</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.client}</p>
+                  </div>
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-semibold">Numéro Commande</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.numero}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <Calendar className="h-4 w-4" />
+                      <span className="font-semibold">Date</span>
+                    </div>
+                    <p className="font-semibold text-foreground">{data.date}</p>
+                  </div>
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <DollarSign className="h-4 w-4" />
+                      <span className="font-semibold">Montant</span>
+                    </div>
+                    <p className="font-bold text-foreground">{data.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                  </div>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="font-semibold">État</span>
+                  </div>
+                  <Badge status={data.etat} />
+                </div>
+                {data.articles && data.articles.length > 0 && (
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <Package className="h-4 w-4" />
+                      <span className="font-semibold">Articles</span>
+                    </div>
+                    <div className="space-y-2">
+                      {data.articles.map((article, idx) => (
+                        <div key={idx} className="border-l-2 border-indigo-500 pl-3 py-1">
+                          <p className="font-semibold text-foreground">{article.label}</p>
+                          <p className="text-muted-foreground">Quantité: {article.quantite}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {data.factureLiee && (
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-semibold">Facture liée</span>
+                    </div>
+                    <p className="font-semibold text-foreground">{data.factureLiee}</p>
+                  </div>
+                )}
+                {client && (
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-semibold">Informations Client</span>
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center space-x-2">
+                        <Phone className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{client.telephone}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Mail className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground">{client.email}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <MapPin className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-muted-foreground truncate">{client.adresse}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          }
+          return null;
+        })()}
+      </Modal>
+
+      {/* Devis Details Modal */}
+      <Modal isOpen={!!selectedDevisDetails} onClose={() => setSelectedDevisDetails(null)} title={`Détails Devis : ${selectedDevisDetails?.numero}`}>
+        {selectedDevisDetails && (() => {
+          const client = clients.find(c => c.nom === selectedDevisDetails.client);
+          return (
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <User className="h-4 w-4" />
+                    <span className="font-semibold">Client</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedDevisDetails.client}</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <FileText className="h-4 w-4" />
+                    <span className="font-semibold">Numéro Devis</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedDevisDetails.numero}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-semibold">Date</span>
+                  </div>
+                  <p className="font-semibold text-foreground">{selectedDevisDetails.date}</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-semibold">Montant Estimé</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedDevisDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                </div>
+              </div>
+
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-semibold">Statut</span>
+                </div>
+                <Badge status={selectedDevisDetails.statut} />
+              </div>
+
+              {(selectedDevisDetails.surface || selectedDevisDetails.lineaire || selectedDevisDetails.metrage || selectedDevisDetails.typeProjet || selectedDevisDetails.description) && (
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <FileText className="h-4 w-4" />
+                    <span className="font-semibold">Détails Projet</span>
+                  </div>
+                  <div className="space-y-1">
+                    {selectedDevisDetails.surface && <p className="text-muted-foreground">Surface: {selectedDevisDetails.surface} m²</p>}
+                    {selectedDevisDetails.lineaire && <p className="text-muted-foreground">Linéaire: {selectedDevisDetails.lineaire} m</p>}
+                    {selectedDevisDetails.metrage && <p className="text-muted-foreground">Métrage: {selectedDevisDetails.metrage} m</p>}
+                    {selectedDevisDetails.typeProjet && <p className="text-muted-foreground">Type: {selectedDevisDetails.typeProjet}</p>}
+                    {selectedDevisDetails.description && <p className="text-muted-foreground italic">{selectedDevisDetails.description}</p>}
+                  </div>
+                </div>
+              )}
+
+              {client && (
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <User className="h-4 w-4" />
+                    <span className="font-semibold">Informations Client</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{client.telephone}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{client.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground truncate">{client.adresse}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">Solde: {client.solde.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+      </Modal>
+
+      {/* Sale Details Modal */}
+      <Modal isOpen={!!selectedVenteDetails} onClose={() => setSelectedVenteDetails(null)} title={`Détails Vente : ${selectedVenteDetails?.facture}`}>
+        {selectedVenteDetails && (() => {
+          const client = clients.find(c => c.nom === selectedVenteDetails.client);
+          return (
+            <div className="space-y-4 text-xs">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <User className="h-4 w-4" />
+                    <span className="font-semibold">Client</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedVenteDetails.client}</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <FileText className="h-4 w-4" />
+                    <span className="font-semibold">Facture</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedVenteDetails.facture}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-semibold">Date d'émission</span>
+                  </div>
+                  <p className="font-semibold text-foreground">{selectedVenteDetails.date}</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-semibold">Total TTC</span>
+                  </div>
+                  <p className="font-bold text-foreground">{selectedVenteDetails.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                </div>
+              </div>
+
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="font-semibold">Statut</span>
+                </div>
+                <Badge status={selectedVenteDetails.statut} />
+              </div>
+
+              {client && (
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <User className="h-4 w-4" />
+                    <span className="font-semibold">Informations Client</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex items-center space-x-2">
+                      <Phone className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{client.telephone}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Mail className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">{client.email}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <MapPin className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground truncate">{client.adresse}</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <DollarSign className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-muted-foreground">Solde: {client.solde.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </Modal>
 
       {/* PDF View Modal Simulation */}

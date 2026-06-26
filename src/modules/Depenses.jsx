@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { Plus, DollarSign, Wallet } from "lucide-react";
+import { Plus, DollarSign, Wallet, Eye, Calendar, FileText, CheckCircle } from "lucide-react";
 
 export default function Depenses() {
   const {
@@ -11,6 +11,7 @@ export default function Depenses() {
   } = useApp();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedDepenseDetails, setSelectedDepenseDetails] = useState(null);
 
   // Form states
   const [categorie, setCategorie] = useState("Divers");
@@ -131,12 +132,13 @@ export default function Depenses() {
               <Th>Description / Motif</Th>
               <Th>Montant TTC</Th>
               <Th>Date Règlement</Th>
+              <th className="text-center">Détails</th>
             </Tr>
           </THead>
           <TBody>
             {filteredDepenses.length === 0 ? (
               <Tr>
-                <Td colSpan={4} className="text-center py-8 text-muted-foreground">Aucune dépense enregistrée.</Td>
+                <Td colSpan={5} className="text-center py-8 text-muted-foreground">Aucune dépense enregistrée.</Td>
               </Tr>
             ) : (
               filteredDepenses.map((d) => (
@@ -155,6 +157,15 @@ export default function Depenses() {
                   <Td className="font-medium text-foreground">{d.description}</Td>
                   <Td className="font-bold text-rose-600">-{d.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</Td>
                   <Td className="text-muted-foreground">{d.date}</Td>
+                  <Td className="text-center">
+                    <button
+                      onClick={() => setSelectedDepenseDetails(d)}
+                      className="p-1.5 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 rounded-lg transition-colors cursor-pointer"
+                      title="Voir les détails"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </button>
+                  </Td>
                 </Tr>
               ))
             )}
@@ -231,6 +242,60 @@ export default function Depenses() {
           </div>
         </form>
       </Modal>
+
+      {/* Depense Details Modal */}
+      {selectedDepenseDetails && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedDepenseDetails(null)}>
+          <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-border flex justify-between items-center">
+              <h3 className="font-bold text-sm">Détails Dépense</h3>
+              <button onClick={() => setSelectedDepenseDetails(null)} className="text-muted-foreground hover:text-foreground">
+                <CheckCircle className="h-4 w-4" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4 text-xs">
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="font-semibold">Catégorie</span>
+                </div>
+                <span className={`inline-flex items-center text-xs font-semibold px-2.5 py-0.5 rounded-full 
+                  ${selectedDepenseDetails.categorie === "Loyer" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : ""}
+                  ${selectedDepenseDetails.categorie === "Transport" ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400" : ""}
+                  ${selectedDepenseDetails.categorie === "Salaires" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : ""}
+                  ${selectedDepenseDetails.categorie === "Electricité" ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : ""}
+                  ${selectedDepenseDetails.categorie === "Divers" ? "bg-slate-500/10 text-slate-600 dark:text-slate-400" : ""}
+                `}>
+                  {selectedDepenseDetails.categorie}
+                </span>
+              </div>
+              <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="font-semibold">Description / Motif</span>
+                </div>
+                <p className="font-semibold text-foreground">{selectedDepenseDetails.description}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <DollarSign className="h-4 w-4" />
+                    <span className="font-semibold">Montant TTC</span>
+                  </div>
+                  <p className="font-bold text-rose-600">-{selectedDepenseDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                </div>
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Calendar className="h-4 w-4" />
+                    <span className="font-semibold">Date Règlement</span>
+                  </div>
+                  <p className="font-semibold text-foreground">{selectedDepenseDetails.date}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

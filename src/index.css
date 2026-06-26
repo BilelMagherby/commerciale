@@ -156,3 +156,117 @@ body {
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.04);
 }
+
+/* Print Styles */
+@media print {
+  /* Hide non-printable elements but keep logo */
+  button:not(.print-keep),
+  nav:not(.print-keep),
+  .sidebar,
+  .modal,
+  [role="dialog"],
+  .no-print,
+  .hidden-print {
+    display: none !important;
+  }
+
+  /* Show logo in print */
+  nav {
+    display: flex !important;
+    position: static !important;
+    border-bottom: 2px solid #000 !important;
+    padding: 10px 20px !important;
+    background: white !important;
+  }
+
+  /* Hide nav elements except logo */
+  nav > div > div:not(:first-child),
+  nav > div > div:last-child {
+    display: none !important;
+  }
+
+  /* Keep only the logo section */
+  nav > div > div:first-child {
+    display: flex !important;
+  }
+
+  /* Ensure proper colors for printing */
+  body {
+    background-color: white !important;
+    color: black !important;
+  }
+
+  /* Remove shadows and effects */
+  * {
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Ensure tables print correctly */
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  td, th {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* Prevent page breaks inside cards */
+  .card,
+  .bg-card {
+    page-break-inside: avoid;
+  }
+
+  /* Ensure proper contrast */
+  .text-muted-foreground {
+    color: #666 !important;
+  }
+
+  .text-foreground {
+    color: #000 !important;
+  }
+
+  /* Print backgrounds */
+  .bg-secondary,
+  .bg-card {
+    background-color: white !important;
+    border: 1px solid #ccc !important;
+  }
+
+  /* Ensure charts print properly */
+  svg {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Add page break before main sections */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  /* Hide scrollbars in print */
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Logo specific print styles */
+  nav .h-9.w-9 {
+    border: 2px solid #000 !important;
+    color: #000 !important;
+    background: white !important;
+  }
+
+  nav .font-heading {
+    color: #000 !important;
+  }
+
+  nav .text-muted-foreground {
+    color: #666 !important;
+  }
+}

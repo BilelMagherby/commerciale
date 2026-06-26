@@ -11,7 +11,9 @@ import {
   Package, 
   FileText, 
   CheckCircle,
-  Filter
+  Filter,
+  Printer,
+  Eye
 } from "lucide-react";
 
 export default function Commandes() {
@@ -25,6 +27,11 @@ export default function Commandes() {
 
   const [viewType, setViewType] = useState("kanban"); // 'kanban' or 'table'
   const [selectedClient, setSelectedClient] = useState("Tous");
+  const [selectedCommandeDetails, setSelectedCommandeDetails] = useState(null);
+
+  const handlePrint = () => {
+    window.print();
+  };
 
   // Kanban columns configuration
   const columns = [
@@ -124,6 +131,15 @@ export default function Commandes() {
               <span>Tableau</span>
             </button>
           </div>
+
+          <button
+            onClick={handlePrint}
+            className="flex items-center space-x-1.5 bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-xs px-3 py-2 rounded-xl border border-border shadow-sm transition-all cursor-pointer"
+            title="Imprimer"
+          >
+            <Printer className="w-3.5 h-3.5" />
+            <span>Imprimer</span>
+          </button>
         </div>
       </div>
 
@@ -213,6 +229,13 @@ export default function Commandes() {
                           {/* Interactive column mover triggers (Tablet/Mobile support) */}
                           <div className="flex items-center justify-between pt-2 border-t border-border/40 text-[10px]">
                             <button
+                              onClick={() => setSelectedCommandeDetails(order)}
+                              className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-indigo-600 transition-colors"
+                              title="Voir les détails"
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                            </button>
+                            <button
                               onClick={() => moveOrder(order.id, order.etat, -1)}
                               disabled={order.etat === "En attente"}
                               className="p-1 hover:bg-secondary rounded text-muted-foreground hover:text-foreground disabled:opacity-30 disabled:pointer-events-none transition-colors"
@@ -220,7 +243,6 @@ export default function Commandes() {
                             >
                               <ArrowLeft className="w-3.5 h-3.5" />
                             </button>
-                            <span className="text-[9px] text-muted-foreground/60 uppercase tracking-widest font-bold">Déplacer</span>
                             <button
                               onClick={() => moveOrder(order.id, order.etat, 1)}
                               disabled={order.etat === "Annulée"}
@@ -249,12 +271,13 @@ export default function Commandes() {
                 <Th>État d'avancement</Th>
                 <Th>Articles</Th>
                 <Th>Facture liée</Th>
+                <th className="text-center">Détails</th>
               </Tr>
             </THead>
             <TBody>
               {filteredCommandes.length === 0 ? (
                 <Tr>
-                  <Td colSpan={7} className="text-center py-8 text-muted-foreground">Aucune commande répertoriée.</Td>
+                  <Td colSpan={8} className="text-center py-8 text-muted-foreground">Aucune commande répertoriée.</Td>
                 </Tr>
               ) : (
                 filteredCommandes.map((c) => (
@@ -287,11 +310,104 @@ export default function Commandes() {
                         <span className="text-[10px] text-muted-foreground italic">Aucune</span>
                       )}
                     </Td>
+                    <Td className="text-center">
+                      <button
+                        onClick={() => setSelectedCommandeDetails(c)}
+                        className="p-1.5 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 rounded-lg transition-colors cursor-pointer"
+                        title="Voir les détails"
+                      >
+                        <Eye className="h-4 w-4" />
+                      </button>
+                    </Td>
                   </Tr>
                 ))
               )}
             </TBody>
           </TableContainer>
+        )}
+
+        {/* Commande Details Modal */}
+        {selectedCommandeDetails && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedCommandeDetails(null)}>
+            <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="p-4 border-b border-border flex justify-between items-center">
+                <h3 className="font-bold text-sm">Détails Commande : {selectedCommandeDetails.numero}</h3>
+                <button onClick={() => setSelectedCommandeDetails(null)} className="text-muted-foreground hover:text-foreground">
+                  <CheckCircle className="h-4 w-4" />
+                </button>
+              </div>
+              <div className="p-4 space-y-4 text-xs">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-semibold">Numéro Commande</span>
+                    </div>
+                    <p className="font-bold text-foreground">{selectedCommandeDetails.numero}</p>
+                  </div>
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <User className="h-4 w-4" />
+                      <span className="font-semibold">Client</span>
+                    </div>
+                    <p className="font-bold text-foreground">{selectedCommandeDetails.client}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <Calendar className="h-4 w-4" />
+                      <span className="font-semibold">Date</span>
+                    </div>
+                    <p className="font-semibold text-foreground">{selectedCommandeDetails.date}</p>
+                  </div>
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-semibold">Montant TTC</span>
+                    </div>
+                    <p className="font-bold text-foreground">{selectedCommandeDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                  </div>
+                </div>
+
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="font-semibold">État</span>
+                  </div>
+                  <Badge status={selectedCommandeDetails.etat} />
+                </div>
+
+                {selectedCommandeDetails.articles && selectedCommandeDetails.articles.length > 0 && (
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <Package className="h-4 w-4" />
+                      <span className="font-semibold">Articles</span>
+                    </div>
+                    <div className="space-y-2">
+                      {selectedCommandeDetails.articles.map((article, idx) => (
+                        <div key={idx} className="border-l-2 border-indigo-500 pl-3 py-1">
+                          <p className="font-semibold text-foreground">{article.label}</p>
+                          <p className="text-muted-foreground">Quantité: {article.quantite}</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedCommandeDetails.factureLiee && (
+                  <div className="bg-secondary/30 p-3 rounded-lg">
+                    <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                      <FileText className="h-4 w-4" />
+                      <span className="font-semibold">Facture liée</span>
+                    </div>
+                    <p className="font-semibold text-foreground">{selectedCommandeDetails.factureLiee}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

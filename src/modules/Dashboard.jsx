@@ -10,7 +10,8 @@ import {
   AlertCircle,
   ArrowUpRight,
   ArrowDownRight,
-  ArrowRight
+  ArrowRight,
+  Printer
 } from "lucide-react";
 import {
   AreaChart,
@@ -136,6 +137,10 @@ export default function Dashboard() {
 
   const COLORS = ["#10b981", "#f59e0b", "#ef4444"];
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   return (
     <div className="space-y-8 animate-fade-in">
       {/* Welcome Header */}
@@ -148,8 +153,18 @@ export default function Dashboard() {
             Aperçu en temps réel de votre activité commerciale et financière.
           </p>
         </div>
-        <div className="text-xs bg-card border border-border px-3 py-1.5 rounded-lg text-muted-foreground shadow-sm">
-          Dernière synchronisation : <span className="font-bold text-foreground">En direct</span>
+        <div className="flex items-center gap-3">
+          <div className="text-xs bg-card border border-border px-3 py-1.5 rounded-lg text-muted-foreground shadow-sm">
+            Dernière synchronisation : <span className="font-bold text-foreground">En direct</span>
+          </div>
+          <button
+            onClick={handlePrint}
+            className="flex items-center gap-2 px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-sm transition-all text-xs cursor-pointer"
+            title="Imprimer le tableau de bord"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Imprimer</span>
+          </button>
         </div>
       </div>
 
