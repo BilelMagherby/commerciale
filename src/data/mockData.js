@@ -25,10 +25,10 @@ export const initialVentes = [
 ];
 
 export const initialAchats = [
-  { id: 1, reference: "ACH-2026-001", fournisseur: "Somme Matériels", date: "2026-06-02", montant: 4500.00, statut: "Payé", articles: [{ nom: "Matériaux construction", quantite: 100, prixUnitaire: 45.00, description: "Ciment et sable" }] },
-  { id: 2, reference: "ACH-2026-002", fournisseur: "DistriData Systems", date: "2026-06-08", montant: 9800.00, statut: "Payé", articles: [{ nom: "Serveurs Dell PowerEdge", quantite: 2, prixUnitaire: 4900.00, description: "Serveurs entreprise" }] },
-  { id: 3, reference: "ACH-2026-003", fournisseur: "Energy & Co", date: "2026-06-14", montant: 2300.00, statut: "En attente", articles: [{ nom: "Panneaux solaires", quantite: 10, prixUnitaire: 230.00, description: "Panneaux photovoltaïques" }] },
-  { id: 4, reference: "ACH-2026-004", fournisseur: "Office Supply Premium", date: "2026-06-20", montant: 850.00, statut: "Partiel", articles: [{ nom: "Fournitures bureau", quantite: 50, prixUnitaire: 17.00, description: "Papier, stylos, classeurs" }] }
+  { id: 1, reference: "ACH-2026-001", fournisseur: "Somme Matériels", date: "2026-06-02", montant: 4500.00, statut: "Payé", articles: [{ nom: "Matériaux construction", quantite: 100, prixUnitaire: 45.00, description: "Ciment et sable", surface: 50 }] },
+  { id: 2, reference: "ACH-2026-002", fournisseur: "DistriData Systems", date: "2026-06-08", montant: 9800.00, statut: "Payé", articles: [{ nom: "Serveurs Dell PowerEdge", quantite: 2, prixUnitaire: 4900.00, description: "Serveurs entreprise", surface: null }] },
+  { id: 3, reference: "ACH-2026-003", fournisseur: "Energy & Co", date: "2026-06-14", montant: 2300.00, statut: "En attente", articles: [{ nom: "Panneaux solaires", quantite: 10, prixUnitaire: 230.00, description: "Panneaux photovoltaïques", surface: 25 }] },
+  { id: 4, reference: "ACH-2026-004", fournisseur: "Office Supply Premium", date: "2026-06-20", montant: 850.00, statut: "Partiel", articles: [{ nom: "Fournitures bureau", quantite: 50, prixUnitaire: 17.00, description: "Papier, stylos, classeurs", surface: null }] }
 ];
 
 export const initialBonsCommande = [

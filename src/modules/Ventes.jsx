@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter, Printer, Eye, DollarSign, Calendar, Package, Mail } from "lucide-react";
+import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter, Printer, Eye, DollarSign, Calendar, Package, Mail, Trash2 } from "lucide-react";
 
 export default function Ventes() {
   const {
@@ -38,14 +38,12 @@ export default function Ventes() {
   const [statut, setStatut] = useState("En attente");
 
   const [devisClient, setDevisClient] = useState(clients[0]?.nom || "");
-  const [devisMontant, setDevisMontant] = useState("");
   const [devisDate, setDevisDate] = useState(new Date().toISOString().split("T")[0]);
   const [devisStatut, setDevisStatut] = useState("En attente");
-  const [devisSurface, setDevisSurface] = useState("");
-  const [devisLineaire, setDevisLineaire] = useState("");
-  const [devisMetrage, setDevisMetrage] = useState("");
-  const [devisTypeProjet, setDevisTypeProjet] = useState("");
   const [devisDescription, setDevisDescription] = useState("");
+  const [devisItems, setDevisItems] = useState([
+    { id: 1, article: "", length: "", width: "", quantity: "1", unitPrice: "" }
+  ]);
 
   const handleCreateVente = (e) => {
     e.preventDefault();
@@ -61,29 +59,71 @@ export default function Ventes() {
 
   const handleCreateDevis = (e) => {
     e.preventDefault();
-    if (!devisMontant || parseFloat(devisMontant) <= 0) {
-      alert("Veuillez saisir un montant de devis valide.");
+    
+    // Calculate grand total
+    const grandTotal = devisItems.reduce((sum, item) => {
+      const length = parseFloat(item.length) || 0;
+      const width = parseFloat(item.width) || 0;
+      const quantity = parseFloat(item.quantity) || 0;
+      const unitPrice = parseFloat(item.unitPrice) || 0;
+      return sum + (length * width * unitPrice * quantity);
+    }, 0);
+    
+    if (grandTotal <= 0) {
+      alert("Veuillez saisir au moins un article avec des dimensions et un prix unitaire.");
       return;
     }
+    
     addDevisRecord({ 
       client: devisClient, 
-      montant: devisMontant, 
+      montant: grandTotal, 
       date: devisDate, 
       statut: devisStatut,
-      surface: parseFloat(devisSurface) || 0,
-      lineaire: parseFloat(devisLineaire) || 0,
-      metrage: parseFloat(devisMetrage) || 0,
-      typeProjet: devisTypeProjet,
-      description: devisDescription
+      description: devisDescription,
+      items: devisItems.map(item => ({
+        article: item.article,
+        length: parseFloat(item.length) || 0,
+        width: parseFloat(item.width) || 0,
+        quantity: parseFloat(item.quantity) || 1,
+        unitPrice: parseFloat(item.unitPrice) || 0,
+        total: (parseFloat(item.length) || 0) * (parseFloat(item.width) || 0) * (parseFloat(item.unitPrice) || 0) * (parseFloat(item.quantity) || 1)
+      }))
     });
     setModalType(null);
-    setDevisMontant("");
+    setDevisClient(clients[0]?.nom || "");
+    setDevisDate(new Date().toISOString().split("T")[0]);
     setDevisStatut("En attente");
-    setDevisSurface("");
-    setDevisLineaire("");
-    setDevisMetrage("");
-    setDevisTypeProjet("");
     setDevisDescription("");
+    setDevisItems([{ id: 1, article: "", length: "", width: "", quantity: "1", unitPrice: "" }]);
+  };
+
+  const addItemRow = () => {
+    const newId = Math.max(...devisItems.map(item => item.id), 0) + 1;
+    setDevisItems([...devisItems, { id: newId, article: "", length: "", width: "", quantity: "1", unitPrice: "" }]);
+  };
+
+  const removeItemRow = (id) => {
+    if (devisItems.length > 1) {
+      setDevisItems(devisItems.filter(item => item.id !== id));
+    }
+  };
+
+  const updateItemRow = (id, field, value) => {
+    setDevisItems(devisItems.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
+  const calculateRowTotal = (item) => {
+    const length = parseFloat(item.length) || 0;
+    const width = parseFloat(item.width) || 0;
+    const quantity = parseFloat(item.quantity) || 0;
+    const unitPrice = parseFloat(item.unitPrice) || 0;
+    return length * width * unitPrice * quantity;
+  };
+
+  const calculateGrandTotal = () => {
+    return devisItems.reduce((sum, item) => sum + calculateRowTotal(item), 0);
   };
 
   // Filter listings based on global search query
@@ -486,59 +526,6 @@ export default function Ventes() {
             </select>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label className="block font-semibold mb-1 text-muted-foreground">Surface (m²)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Ex: 250"
-                value={devisSurface}
-                onChange={(e) => setDevisSurface(e.target.value)}
-                className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1 text-muted-foreground">Linéaire (m)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Ex: 50"
-                value={devisLineaire}
-                onChange={(e) => setDevisLineaire(e.target.value)}
-                className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="block font-semibold mb-1 text-muted-foreground">Métrage (m)</label>
-              <input
-                type="number"
-                step="0.01"
-                placeholder="Ex: 100"
-                value={devisMetrage}
-                onChange={(e) => setDevisMetrage(e.target.value)}
-                className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-1 text-muted-foreground">Type de Projet</label>
-            <select
-              value={devisTypeProjet}
-              onChange={(e) => setDevisTypeProjet(e.target.value)}
-              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-            >
-              <option value="">Sélectionner...</option>
-              <option value="Rénovation">Rénovation</option>
-              <option value="Construction">Construction</option>
-              <option value="Installation">Installation</option>
-              <option value="Maintenance">Maintenance</option>
-              <option value="Extension">Extension</option>
-              <option value="Réparation">Réparation</option>
-            </select>
-          </div>
-
           <div>
             <label className="block font-semibold mb-1 text-muted-foreground">Description du projet</label>
             <textarea
@@ -550,17 +537,114 @@ export default function Ventes() {
             />
           </div>
 
-          <div>
-            <label className="block font-semibold mb-1 text-muted-foreground">Montant estimatif HT (€)</label>
-            <input
-              type="number"
-              step="0.01"
-              required
-              placeholder="Ex: 8500.00"
-              value={devisMontant}
-              onChange={(e) => setDevisMontant(e.target.value)}
-              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-            />
+          {/* Items Table */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block font-semibold text-muted-foreground">Articles / Produits</label>
+              <button
+                type="button"
+                onClick={addItemRow}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-500/20 transition-colors text-xs font-medium"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Ajouter</span>
+              </button>
+            </div>
+
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-secondary/50">
+                  <tr>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground">Article</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-20">Longueur (m)</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-20">Largeur (m)</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-20">Quantité</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-24">Prix Unitaire (€)</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-24">Total (€)</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {devisItems.map((item, index) => (
+                    <tr key={item.id} className="hover:bg-secondary/30">
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          placeholder="Nom de l'article"
+                          value={item.article}
+                          onChange={(e) => updateItemRow(item.id, "article", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={item.length}
+                          onChange={(e) => updateItemRow(item.id, "length", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={item.width}
+                          onChange={(e) => updateItemRow(item.id, "width", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="1"
+                          placeholder="1"
+                          value={item.quantity}
+                          onChange={(e) => updateItemRow(item.id, "quantity", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={item.unitPrice}
+                          onChange={(e) => updateItemRow(item.id, "unitPrice", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="font-semibold text-foreground">
+                          {calculateRowTotal(item).toLocaleString("fr-FR", { minimumFractionDigits: 2 })}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        {devisItems.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeItemRow(item.id)}
+                            className="p-1 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Grand Total */}
+            <div className="flex justify-end items-center space-x-4 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border border-indigo-500/20 rounded-xl p-4">
+              <span className="font-semibold text-muted-foreground">Total Général:</span>
+              <span className="font-bold text-2xl text-foreground">
+                {calculateGrandTotal().toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+              </span>
+            </div>
           </div>
 
           <div>

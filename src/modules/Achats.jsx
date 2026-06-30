@@ -54,11 +54,11 @@ export default function Achats() {
       prixUnitaire: parseFloat(articlePrixUnitaire) || 0,
       description: articleDescription
     }] : [];
-    
-    addAchatRecord({ 
-      fournisseur, 
-      montant, 
-      date, 
+
+    addAchatRecord({
+      fournisseur,
+      montant,
+      date,
       statut,
       fournisseurNom: fournisseurNom || selectedFournisseur?.nom || "",
       matriculeFiscale: matriculeFiscale || selectedFournisseur?.matriculeFiscale || "",
@@ -85,9 +85,9 @@ export default function Achats() {
       a.fournisseur.toLowerCase().includes(query) ||
       a.statut.toLowerCase().includes(query);
     const matchFourn = selectedFournisseur === "Tous" || a.fournisseur === selectedFournisseur;
-    
+
     // Simulating "product" match in reference code or description (mocking reference match as product link)
-    const matchProd = !searchProduct || 
+    const matchProd = !searchProduct ||
       a.reference.toLowerCase().includes(searchProduct.toLowerCase()) ||
       a.fournisseur.toLowerCase().includes(searchProduct.toLowerCase());
 
@@ -160,8 +160,8 @@ export default function Achats() {
               key={tab.id}
               onClick={() => setActiveTab(tab.id)}
               className={`pb-4 text-sm font-semibold tracking-wide transition-all border-b-2 
-                ${activeTab === tab.id 
-                  ? "border-indigo-600 text-foreground font-bold" 
+                ${activeTab === tab.id
+                  ? "border-indigo-600 text-foreground font-bold"
                   : "border-transparent text-muted-foreground hover:text-foreground"}`}
             >
               {tab.label}
@@ -180,7 +180,7 @@ export default function Achats() {
                 <Filter className="w-4 h-4 text-muted-foreground" />
                 <span className="font-bold text-foreground">Filtres :</span>
               </div>
-              
+
               {/* Fournisseur select */}
               <div className="flex items-center space-x-1 bg-secondary px-2 py-1 rounded-lg">
                 <span className="text-muted-foreground font-semibold">Fournisseur :</span>
@@ -234,7 +234,7 @@ export default function Achats() {
                       <Td className="font-semibold text-right sm:text-left">{a.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</Td>
                       <Td><Badge status={a.statut} /></Td>
                       <Td className="text-center">
-                        <button 
+                        <button
                           onClick={() => setSelectedAchatDetails(a)}
                           className="p-1.5 bg-secondary hover:bg-indigo-500/10 text-muted-foreground hover:text-indigo-600 rounded-lg transition-colors cursor-pointer"
                           title="Voir les détails"
@@ -332,12 +332,11 @@ export default function Achats() {
                     <Td className="font-medium">{bc.fournisseur}</Td>
                     <Td className="text-muted-foreground">{bc.date}</Td>
                     <Td>
-                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${
-                        bc.priorite === "Urgente" ? "bg-rose-500/10 text-rose-600" :
-                        bc.priorite === "Haute" ? "bg-amber-500/10 text-amber-600" :
-                        bc.priorite === "Normale" ? "bg-blue-500/10 text-blue-600" :
-                        "bg-slate-500/10 text-slate-600"
-                      }`}>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${bc.priorite === "Urgente" ? "bg-rose-500/10 text-rose-600" :
+                          bc.priorite === "Haute" ? "bg-amber-500/10 text-amber-600" :
+                            bc.priorite === "Normale" ? "bg-blue-500/10 text-blue-600" :
+                              "bg-slate-500/10 text-slate-600"
+                        }`}>
                         {bc.priorite}
                       </span>
                     </Td>
@@ -585,12 +584,11 @@ export default function Achats() {
                   <AlertCircle className="h-4 w-4" />
                   <span className="font-semibold">Priorité</span>
                 </div>
-                <span className={`font-bold px-2 py-0.5 rounded ${
-                  selectedBonDetails.priorite === "Urgente" ? "bg-rose-500/10 text-rose-600" :
-                  selectedBonDetails.priorite === "Haute" ? "bg-amber-500/10 text-amber-600" :
-                  selectedBonDetails.priorite === "Normale" ? "bg-blue-500/10 text-blue-600" :
-                  "bg-slate-500/10 text-slate-600"
-                }`}>
+                <span className={`font-bold px-2 py-0.5 rounded ${selectedBonDetails.priorite === "Urgente" ? "bg-rose-500/10 text-rose-600" :
+                    selectedBonDetails.priorite === "Haute" ? "bg-amber-500/10 text-amber-600" :
+                      selectedBonDetails.priorite === "Normale" ? "bg-blue-500/10 text-blue-600" :
+                        "bg-slate-500/10 text-slate-600"
+                  }`}>
                   {selectedBonDetails.priorite}
                 </span>
               </div>
@@ -692,94 +690,252 @@ export default function Achats() {
         {selectedAchatDetails && (() => {
           const fournisseur = fournisseurs.find(f => f.nom === selectedAchatDetails.fournisseur);
           return (
-            <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/30 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+            <div className="space-y-5">
+              {/* Primary Information Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-500/20 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 mb-2">
                     <Building className="h-4 w-4" />
-                    <span className="font-semibold">Fournisseur</span>
+                    <span className="font-semibold text-xs uppercase tracking-wider">Fournisseur</span>
                   </div>
-                  <p className="font-bold text-foreground">{selectedAchatDetails.fournisseur}</p>
+                  <p className="font-bold text-lg text-foreground">{selectedAchatDetails.fournisseur}</p>
                 </div>
-                <div className="bg-secondary/30 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <div className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/20 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 mb-2">
                     <FileText className="h-4 w-4" />
-                    <span className="font-semibold">Référence</span>
+                    <span className="font-semibold text-xs uppercase tracking-wider">Référence</span>
                   </div>
-                  <p className="font-bold text-foreground">{selectedAchatDetails.reference}</p>
+                  <p className="font-bold text-lg text-foreground">{selectedAchatDetails.reference}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/30 p-3 rounded-lg">
+              {/* Secondary Information */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-secondary/50 border border-border/60 rounded-xl p-4">
                   <div className="flex items-center space-x-2 text-muted-foreground mb-2">
                     <Calendar className="h-4 w-4" />
-                    <span className="font-semibold">Date d'enregistrement</span>
+                    <span className="font-semibold text-xs uppercase tracking-wider">Date</span>
                   </div>
                   <p className="font-semibold text-foreground">{selectedAchatDetails.date}</p>
                 </div>
-                <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="bg-secondary/50 border border-border/60 rounded-xl p-4">
                   <div className="flex items-center space-x-2 text-muted-foreground mb-2">
                     <DollarSign className="h-4 w-4" />
-                    <span className="font-semibold">Montant Net</span>
+                    <span className="font-semibold text-xs uppercase tracking-wider">Montant Net</span>
                   </div>
-                  <p className="font-bold text-foreground">{selectedAchatDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                  <p className="font-bold text-lg text-foreground">{selectedAchatDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
                 </div>
-              </div>
-
-              <div className="bg-secondary/30 p-3 rounded-lg">
-                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                  <CheckCircle className="h-4 w-4" />
-                  <span className="font-semibold">Statut</span>
-                </div>
-                <Badge status={selectedAchatDetails.statut} />
-              </div>
-
-              {fournisseur && (
-                <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="bg-secondary/50 border border-border/60 rounded-xl p-4">
                   <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                    <Building className="h-4 w-4" />
-                    <span className="font-semibold">Informations Fournisseur</span>
+                    <CheckCircle className="h-4 w-4" />
+                    <span className="font-semibold text-xs uppercase tracking-wider">Statut</span>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">{fournisseur.telephone}</span>
+                  <Badge status={selectedAchatDetails.statut} />
+                </div>
+              </div>
+
+              {/* Articles Section */}
+              {selectedAchatDetails.articles && selectedAchatDetails.articles.length > 0 && (
+                <div className="bg-gradient-to-br from-slate-500/5 to-slate-500/10 border border-border/60 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center space-x-2 text-foreground mb-4 pb-3 border-b border-border/50">
+                    <Package className="h-5 w-5 text-indigo-500" />
+                    <h4 className="font-bold text-sm uppercase tracking-wider">Articles Commandés</h4>
+                    <span className="ml-auto text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-semibold">
+                      {selectedAchatDetails.articles.length}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {selectedAchatDetails.articles.map((article, idx) => (
+                      <div key={idx} className="bg-card/50 border border-border/40 rounded-lg p-4 hover:border-indigo-500/30 transition-colors">
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="font-bold text-foreground text-sm">{article.nom}</p>
+                          {article.surface && (
+                            <span className="text-xs bg-slate-500/10 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">
+                              {article.surface} m²
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div className="flex items-center space-x-2 text-muted-foreground">
+                            <span className="font-medium">Quantité:</span>
+                            <span className="font-semibold text-foreground">{article.quantite}</span>
+                          </div>
+                          {article.prixUnitaire && (
+                            <div className="flex items-center space-x-2 text-muted-foreground">
+                              <span className="font-medium">Prix unitaire:</span>
+                              <span className="font-semibold text-foreground">{article.prixUnitaire.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
+                            </div>
+                          )}
+                        </div>
+                        {article.description && (
+                          <p className="text-muted-foreground text-xs italic mt-2 pt-2 border-t border-border/30">{article.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Supplier Information */}
+              {fournisseur && (
+                <div className="bg-gradient-to-br from-amber-500/5 to-orange-500/5 border border-amber-500/20 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400 mb-4 pb-3 border-b border-amber-500/20">
+                    <Building className="h-5 w-5" />
+                    <h4 className="font-bold text-sm uppercase tracking-wider">Informations Fournisseur</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-3 bg-card/50 rounded-lg p-3">
+                      <div className="p-2 bg-indigo-500/10 rounded-lg">
+                        <Phone className="h-4 w-4 text-indigo-500" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Téléphone</p>
+                        <p className="font-semibold text-foreground text-sm">{fournisseur.telephone}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">{fournisseur.email}</span>
+                    <div className="flex items-center space-x-3 bg-card/50 rounded-lg p-3">
+                      <div className="p-2 bg-indigo-500/10 rounded-lg">
+                        <Mail className="h-4 w-4 text-indigo-500" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Email</p>
+                        <p className="font-semibold text-foreground text-sm">{fournisseur.email}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground truncate">{fournisseur.adresse}</span>
+                    <div className="flex items-center space-x-3 bg-card/50 rounded-lg p-3 md:col-span-2">
+                      <div className="p-2 bg-indigo-500/10 rounded-lg">
+                        <MapPin className="h-4 w-4 text-indigo-500" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Adresse</p>
+                        <p className="font-semibold text-foreground text-sm">{fournisseur.adresse}</p>
+                      </div>
                     </div>
                     {fournisseur.matriculeFiscale && (
-                      <div className="flex items-center space-x-2">
-                        <FileText className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">Matricule: {fournisseur.matriculeFiscale}</span>
+                      <div className="flex items-center space-x-3 bg-card/50 rounded-lg p-3 md:col-span-2">
+                        <div className="p-2 bg-indigo-500/10 rounded-lg">
+                          <FileText className="h-4 w-4 text-indigo-500" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Matricule Fiscale</p>
+                          <p className="font-semibold text-foreground text-sm">{fournisseur.matriculeFiscale}</p>
+                        </div>
                       </div>
                     )}
                   </div>
                 </div>
               )}
+            </div>
+          );
+        })()}
+      </Modal>
 
-              {selectedAchatDetails.articles && selectedAchatDetails.articles.length > 0 && (
-                <div className="bg-secondary/30 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                    <Package className="h-4 w-4" />
-                    <span className="font-semibold">Articles</span>
+      {/* Fournisseur Details Modal */}
+      <Modal isOpen={!!selectedFournisseurDetails} onClose={() => setSelectedFournisseurDetails(null)} title={`Détails Fournisseur : ${selectedFournisseurDetails?.nom}`}>
+        {selectedFournisseurDetails && (() => {
+          const fournisseurAchats = achats.filter(a => a.fournisseur === selectedFournisseurDetails.nom);
+          return (
+            <div className="space-y-5">
+              {/* Supplier Name Card */}
+              <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-500/20 rounded-xl p-5 shadow-sm">
+                <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 mb-2">
+                  <Building className="h-5 w-5" />
+                  <span className="font-semibold text-xs uppercase tracking-wider">Nom du fournisseur</span>
+                </div>
+                <p className="font-bold text-2xl text-foreground">{selectedFournisseurDetails.nom}</p>
+              </div>
+
+              {/* Contact Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex items-center space-x-3 bg-secondary/50 border border-border/60 rounded-xl p-4">
+                  <div className="p-2.5 bg-indigo-500/10 rounded-lg">
+                    <Phone className="h-5 w-5 text-indigo-500" />
                   </div>
-                  <div className="space-y-2">
-                    {selectedAchatDetails.articles.map((article, idx) => (
-                      <div key={idx} className="border-l-2 border-indigo-500 pl-3 py-1">
-                        <p className="font-semibold text-foreground">{article.nom}</p>
-                        <p className="text-muted-foreground">Quantité: {article.quantite}</p>
-                        {article.prixUnitaire && (
-                          <p className="text-muted-foreground">Prix unitaire: {article.prixUnitaire.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
-                        )}
-                        {article.description && (
-                          <p className="text-muted-foreground text-[10px] italic">{article.description}</p>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Téléphone</p>
+                    <p className="font-semibold text-foreground">{selectedFournisseurDetails.telephone}</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-3 bg-secondary/50 border border-border/60 rounded-xl p-4">
+                  <div className="p-2.5 bg-indigo-500/10 rounded-lg">
+                    <Mail className="h-5 w-5 text-indigo-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Email</p>
+                    <p className="font-semibold text-foreground">{selectedFournisseurDetails.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="bg-secondary/50 border border-border/60 rounded-xl p-4">
+                <div className="flex items-center space-x-3">
+                  <div className="p-2.5 bg-indigo-500/10 rounded-lg">
+                    <MapPin className="h-5 w-5 text-indigo-500" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Adresse</p>
+                    <p className="font-semibold text-foreground">{selectedFournisseurDetails.adresse}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fiscal Number */}
+              {selectedFournisseurDetails.matriculeFiscale && (
+                <div className="bg-secondary/50 border border-border/60 rounded-xl p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2.5 bg-indigo-500/10 rounded-lg">
+                      <FileText className="h-5 w-5 text-indigo-500" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Matricule Fiscale</p>
+                      <p className="font-semibold text-foreground">{selectedFournisseurDetails.matriculeFiscale}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Balance */}
+              <div className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/20 rounded-xl p-5 shadow-sm">
+                <div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 mb-2">
+                  <DollarSign className="h-5 w-5" />
+                  <span className="font-semibold text-xs uppercase tracking-wider">Solde Dû</span>
+                </div>
+                <p className={`font-bold text-3xl ${selectedFournisseurDetails.solde > 0 ? "text-amber-600" : "text-emerald-600"}`}>
+                  {selectedFournisseurDetails.solde.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+                </p>
+              </div>
+
+              {/* Purchase History */}
+              {fournisseurAchats.length > 0 && (
+                <div className="bg-gradient-to-br from-slate-500/5 to-slate-500/10 border border-border/60 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center space-x-2 text-foreground mb-4 pb-3 border-b border-border/50">
+                    <Package className="h-5 w-5 text-indigo-500" />
+                    <h4 className="font-bold text-sm uppercase tracking-wider">Achats effectués</h4>
+                    <span className="ml-auto text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-semibold">
+                      {fournisseurAchats.length}
+                    </span>
+                  </div>
+                  <div className="space-y-3">
+                    {fournisseurAchats.map((achat) => (
+                      <div key={achat.id} className="bg-card/50 border border-border/40 rounded-lg p-4 hover:border-indigo-500/30 transition-colors">
+                        <div className="flex justify-between items-start mb-2">
+                          <p className="font-bold text-foreground text-sm">{achat.reference}</p>
+                          <span className="text-xs bg-slate-500/10 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">
+                            {achat.date}
+                          </span>
+                        </div>
+                        {achat.articles && achat.articles.length > 0 && (
+                          <div className="space-y-1 mt-2 pt-2 border-t border-border/30">
+                            {achat.articles.map((article, idx) => (
+                              <div key={idx} className="text-muted-foreground text-xs flex items-center space-x-2">
+                                <span className="font-medium text-foreground">• {article.nom}</span>
+                                {article.quantite && <span className="text-xs">({article.quantite} unités)</span>}
+                                {article.prixUnitaire && <span className="text-xs">- {article.prixUnitaire.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €/unité</span>}
+                                {article.surface && <span className="text-xs bg-slate-500/10 px-2 py-0.5 rounded-full">- {article.surface} m²</span>}
+                              </div>
+                            ))}
+                          </div>
                         )}
                       </div>
                     ))}
@@ -791,129 +947,135 @@ export default function Achats() {
         })()}
       </Modal>
 
-      {/* Fournisseur Details Modal */}
-      <Modal isOpen={!!selectedFournisseurDetails} onClose={() => setSelectedFournisseurDetails(null)} title={`Détails Fournisseur : ${selectedFournisseurDetails?.nom}`}>
-        {selectedFournisseurDetails && (
-          <div className="space-y-4 text-xs">
-            <div className="bg-secondary/30 p-3 rounded-lg">
-              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                <Building className="h-4 w-4" />
-                <span className="font-semibold">Nom du fournisseur</span>
-              </div>
-              <p className="font-bold text-foreground">{selectedFournisseurDetails.nom}</p>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-secondary/30 p-3 rounded-lg">
-                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                  <Phone className="h-4 w-4" />
-                  <span className="font-semibold">Téléphone</span>
-                </div>
-                <p className="font-semibold text-foreground">{selectedFournisseurDetails.telephone}</p>
-              </div>
-              <div className="bg-secondary/30 p-3 rounded-lg">
-                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                  <Mail className="h-4 w-4" />
-                  <span className="font-semibold">Email</span>
-                </div>
-                <p className="font-semibold text-foreground">{selectedFournisseurDetails.email}</p>
-              </div>
-            </div>
-
-            <div className="bg-secondary/30 p-3 rounded-lg">
-              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                <MapPin className="h-4 w-4" />
-                <span className="font-semibold">Adresse</span>
-              </div>
-              <p className="font-semibold text-foreground">{selectedFournisseurDetails.adresse}</p>
-            </div>
-
-            {selectedFournisseurDetails.matriculeFiscale && (
-              <div className="bg-secondary/30 p-3 rounded-lg">
-                <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                  <FileText className="h-4 w-4" />
-                  <span className="font-semibold">Matricule Fiscale</span>
-                </div>
-                <p className="font-semibold text-foreground">{selectedFournisseurDetails.matriculeFiscale}</p>
-              </div>
-            )}
-
-            <div className="bg-secondary/30 p-3 rounded-lg">
-              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                <DollarSign className="h-4 w-4" />
-                <span className="font-semibold">Solde Dû</span>
-              </div>
-              <p className={`font-bold text-lg ${selectedFournisseurDetails.solde > 0 ? "text-amber-600" : "text-emerald-600"}`}>
-                {selectedFournisseurDetails.solde.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
-              </p>
-            </div>
-          </div>
-        )}
-      </Modal>
-
       {/* Facture Details Modal */}
       <Modal isOpen={!!selectedFactureDetails} onClose={() => setSelectedFactureDetails(null)} title={`Détails Facture : ${selectedFactureDetails?.numero}`}>
         {selectedFactureDetails && (() => {
           const fournisseur = fournisseurs.find(f => f.nom === selectedFactureDetails.fournisseur);
+          const achat = achats.find(a => a.fournisseur === selectedFactureDetails.fournisseur && a.date === selectedFactureDetails.date);
           return (
-            <div className="space-y-4 text-xs">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/30 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+            <div className="space-y-5">
+              {/* Primary Information Section */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-gradient-to-br from-indigo-500/5 to-purple-500/5 border border-indigo-500/20 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center space-x-2 text-indigo-600 dark:text-indigo-400 mb-2">
                     <FileText className="h-4 w-4" />
-                    <span className="font-semibold">Numéro Facture</span>
+                    <span className="font-semibold text-xs uppercase tracking-wider">Numéro Facture</span>
                   </div>
-                  <p className="font-bold text-foreground">{selectedFactureDetails.numero}</p>
+                  <p className="font-bold text-lg text-foreground">{selectedFactureDetails.numero}</p>
                 </div>
-                <div className="bg-secondary/30 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <div className="bg-gradient-to-br from-emerald-500/5 to-teal-500/5 border border-emerald-500/20 rounded-xl p-4 shadow-sm">
+                  <div className="flex items-center space-x-2 text-emerald-600 dark:text-emerald-400 mb-2">
                     <Building className="h-4 w-4" />
-                    <span className="font-semibold">Fournisseur</span>
+                    <span className="font-semibold text-xs uppercase tracking-wider">Fournisseur</span>
                   </div>
-                  <p className="font-bold text-foreground">{selectedFactureDetails.fournisseur}</p>
+                  <p className="font-bold text-lg text-foreground">{selectedFactureDetails.fournisseur}</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="bg-secondary/30 p-3 rounded-lg">
+              {/* Secondary Information */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="bg-secondary/50 border border-border/60 rounded-xl p-4">
                   <div className="flex items-center space-x-2 text-muted-foreground mb-2">
                     <Calendar className="h-4 w-4" />
-                    <span className="font-semibold">Date</span>
+                    <span className="font-semibold text-xs uppercase tracking-wider">Date</span>
                   </div>
                   <p className="font-semibold text-foreground">{selectedFactureDetails.date || "2026-06-20"}</p>
                 </div>
-                <div className="bg-secondary/30 p-3 rounded-lg">
+                <div className="bg-secondary/50 border border-border/60 rounded-xl p-4">
                   <div className="flex items-center space-x-2 text-muted-foreground mb-2">
                     <DollarSign className="h-4 w-4" />
-                    <span className="font-semibold">Montant TTC</span>
+                    <span className="font-semibold text-xs uppercase tracking-wider">Montant TTC</span>
                   </div>
-                  <p className="font-bold text-foreground">{selectedFactureDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                  <p className="font-bold text-lg text-foreground">{selectedFactureDetails.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
                 </div>
               </div>
 
-              {fournisseur && (
-                <div className="bg-secondary/30 p-3 rounded-lg">
-                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
-                    <Building className="h-4 w-4" />
-                    <span className="font-semibold">Informations Fournisseur</span>
+              {/* Articles Section */}
+              {achat && achat.articles && achat.articles.length > 0 && (
+                <div className="bg-gradient-to-br from-slate-500/5 to-slate-500/10 border border-border/60 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center space-x-2 text-foreground mb-4 pb-3 border-b border-border/50">
+                    <Package className="h-5 w-5 text-indigo-500" />
+                    <h4 className="font-bold text-sm uppercase tracking-wider">Articles Achetés</h4>
+                    <span className="ml-auto text-xs bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 px-2 py-0.5 rounded-full font-semibold">
+                      {achat.articles.length}
+                    </span>
                   </div>
-                  <div className="space-y-1">
-                    <div className="flex items-center space-x-2">
-                      <Phone className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">{fournisseur.telephone}</span>
+                  <div className="space-y-3">
+                    {achat.articles.map((article, idx) => (
+                      <div key={idx} className="bg-card/50 border border-border/40 rounded-lg p-4 hover:border-indigo-500/30 transition-colors">
+                        <div className="flex items-start justify-between mb-2">
+                          <p className="font-bold text-foreground text-sm">{article.nom}</p>
+                          {article.surface && (
+                            <span className="text-xs bg-slate-500/10 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded-full font-medium">
+                              {article.surface} m²
+                            </span>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 text-xs">
+                          <div className="flex items-center space-x-2 text-muted-foreground">
+                            <span className="font-medium">Quantité:</span>
+                            <span className="font-semibold text-foreground">{article.quantite}</span>
+                          </div>
+                          {article.prixUnitaire && (
+                            <div className="flex items-center space-x-2 text-muted-foreground">
+                              <span className="font-medium">Prix unitaire:</span>
+                              <span className="font-semibold text-foreground">{article.prixUnitaire.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
+                            </div>
+                          )}
+                        </div>
+                        {article.description && (
+                          <p className="text-muted-foreground text-xs italic mt-2 pt-2 border-t border-border/30">{article.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Supplier Information */}
+              {fournisseur && (
+                <div className="bg-gradient-to-br from-amber-500/5 to-orange-500/5 border border-amber-500/20 rounded-xl p-5 shadow-sm">
+                  <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400 mb-4 pb-3 border-b border-amber-500/20">
+                    <Building className="h-5 w-5" />
+                    <h4 className="font-bold text-sm uppercase tracking-wider">Informations Fournisseur</h4>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="flex items-center space-x-3 bg-card/50 rounded-lg p-3">
+                      <div className="p-2 bg-indigo-500/10 rounded-lg">
+                        <Phone className="h-4 w-4 text-indigo-500" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Téléphone</p>
+                        <p className="font-semibold text-foreground text-sm">{fournisseur.telephone}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <Mail className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground">{fournisseur.email}</span>
+                    <div className="flex items-center space-x-3 bg-card/50 rounded-lg p-3">
+                      <div className="p-2 bg-indigo-500/10 rounded-lg">
+                        <Mail className="h-4 w-4 text-indigo-500" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Email</p>
+                        <p className="font-semibold text-foreground text-sm">{fournisseur.email}</p>
+                      </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-3 w-3 text-muted-foreground" />
-                      <span className="text-muted-foreground truncate">{fournisseur.adresse}</span>
+                    <div className="flex items-center space-x-3 bg-card/50 rounded-lg p-3 md:col-span-2">
+                      <div className="p-2 bg-indigo-500/10 rounded-lg">
+                        <MapPin className="h-4 w-4 text-indigo-500" />
+                      </div>
+                      <div>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Adresse</p>
+                        <p className="font-semibold text-foreground text-sm">{fournisseur.adresse}</p>
+                      </div>
                     </div>
                     {fournisseur.matriculeFiscale && (
-                      <div className="flex items-center space-x-2">
-                        <FileText className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">Matricule: {fournisseur.matriculeFiscale}</span>
+                      <div className="flex items-center space-x-3 bg-card/50 rounded-lg p-3 md:col-span-2">
+                        <div className="p-2 bg-indigo-500/10 rounded-lg">
+                          <FileText className="h-4 w-4 text-indigo-500" />
+                        </div>
+                        <div>
+                          <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Matricule Fiscale</p>
+                          <p className="font-semibold text-foreground text-sm">{fournisseur.matriculeFiscale}</p>
+                        </div>
                       </div>
                     )}
                   </div>
