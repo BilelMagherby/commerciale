@@ -569,6 +569,15 @@ export default function Achats() {
 
       {/* Bon de Commande Details Modal */}
       <Modal isOpen={!!selectedBonDetails} onClose={() => setSelectedBonDetails(null)} title={`Détails Bon de Commande : ${selectedBonDetails?.numero}`}>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer</span>
+          </button>
+        </div>
         {selectedBonDetails && (
           <div className="space-y-4 text-xs">
             <div className="grid grid-cols-2 gap-4">
@@ -687,6 +696,15 @@ export default function Achats() {
 
       {/* Purchase Details Modal */}
       <Modal isOpen={!!selectedAchatDetails} onClose={() => setSelectedAchatDetails(null)} title={`Détails Achat : ${selectedAchatDetails?.reference}`}>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer</span>
+          </button>
+        </div>
         {selectedAchatDetails && (() => {
           const fournisseur = fournisseurs.find(f => f.nom === selectedAchatDetails.fournisseur);
           return (
@@ -832,6 +850,15 @@ export default function Achats() {
 
       {/* Fournisseur Details Modal */}
       <Modal isOpen={!!selectedFournisseurDetails} onClose={() => setSelectedFournisseurDetails(null)} title={`Détails Fournisseur : ${selectedFournisseurDetails?.nom}`}>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer</span>
+          </button>
+        </div>
         {selectedFournisseurDetails && (() => {
           const fournisseurAchats = achats.filter(a => a.fournisseur === selectedFournisseurDetails.nom);
           return (
@@ -949,6 +976,15 @@ export default function Achats() {
 
       {/* Facture Details Modal */}
       <Modal isOpen={!!selectedFactureDetails} onClose={() => setSelectedFactureDetails(null)} title={`Détails Facture : ${selectedFactureDetails?.numero}`}>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handlePrint}
+            className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer</span>
+          </button>
+        </div>
         {selectedFactureDetails && (() => {
           const fournisseur = fournisseurs.find(f => f.nom === selectedFactureDetails.fournisseur);
           const achat = achats.find(a => a.fournisseur === selectedFactureDetails.fournisseur && a.date === selectedFactureDetails.date);

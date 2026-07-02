@@ -7,14 +7,14 @@ import {
   initialBonsCommande,
   initialFacturesAchat,
   initialDevis,
-  initialCommandes,
   initialPaiementsClients,
   initialPaiementsFournisseurs,
   initialTransactions,
   initialDepenses,
   initialHistorique,
   initialSociete,
-  initialUtilisateurs
+  initialUtilisateurs,
+  initialEmployees
 } from "../data/mockData";
 
 const AppContext = createContext();
@@ -46,7 +46,6 @@ export const AppProvider = ({ children }) => {
   const [bonsCommande, setBonsCommande] = useState(() => getStoredData("erp-bons-commande", initialBonsCommande));
   const [facturesAchat, setFacturesAchat] = useState(() => getStoredData("erp-factures-achat", initialFacturesAchat));
   const [devis, setDevis] = useState(() => getStoredData("erp-devis", initialDevis));
-  const [commandes, setCommandes] = useState(() => getStoredData("erp-commandes", initialCommandes));
   const [paiementsClients, setPaiementsClients] = useState(() => getStoredData("erp-paiements-clients", initialPaiementsClients));
   const [paiementsFournisseurs, setPaiementsFournisseurs] = useState(() => getStoredData("erp-paiements-fournisseurs", initialPaiementsFournisseurs));
   const [transactions, setTransactions] = useState(() => getStoredData("erp-transactions", initialTransactions));
@@ -54,6 +53,7 @@ export const AppProvider = ({ children }) => {
   const [historique, setHistorique] = useState(() => getStoredData("erp-historique", initialHistorique));
   const [societe, setSociete] = useState(() => getStoredData("erp-societe", initialSociete));
   const [utilisateurs, setUtilisateurs] = useState(() => getStoredData("erp-utilisateurs", initialUtilisateurs));
+  const [employees, setEmployees] = useState(() => getStoredData("erp-employees", initialEmployees));
 
   // Helper functions
   function getStoredData(key, fallback) {
@@ -165,19 +165,6 @@ export const AppProvider = ({ children }) => {
       setAndStore("erp-transactions", [newTrans, ...transactions], setTransactions);
     }
 
-    // Add order if created as an order
-    const nextOrderNum = `CMD-2026-${String(commandes.length + 1).padStart(3, "0")}`;
-    const newOrder = {
-      id: `cmd-${Date.now()}`,
-      numero: nextOrderNum,
-      client: venteData.client,
-      date: newVente.date,
-      etat: "En attente",
-      montant: newVente.total,
-      articles: [{ label: "Services de gestion commerciale", qte: 1, prixUnit: newVente.total }]
-    };
-    setAndStore("erp-commandes", [newOrder, ...commandes], setCommandes);
-
     addLog("Vente Créée", "Bilel Connor (Admin)", `Facture ${invoiceNum} enregistrée pour ${venteData.client} (${venteData.total} €)`);
     addToast("success", "Vente Enregistrée", `La facture ${invoiceNum} a été créée avec succès.`);
   };
@@ -258,6 +245,19 @@ export const AppProvider = ({ children }) => {
     addToast("success", "Achat Enregistré", `La référence ${refNum} a été ajoutée.`);
   };
 
+  const addClientRecord = (clientData) => {
+    const newClient = {
+      id: Date.now(),
+      ...clientData,
+      solde: parseFloat(clientData.soldeInitial) || 0,
+      statut: clientData.statut || "Actif"
+    };
+    
+    setAndStore("erp-clients", [newClient, ...clients], setClients);
+    addLog("Client Créé", "Bilel Connor (Admin)", `Nouveau client ${clientData.nom} ajouté (${clientData.typeClient})`);
+    addToast("success", "Client Enregistré", `Le client ${clientData.nom} a été créé avec succès.`);
+  };
+
   const addDevisRecord = (devisData) => {
     const nextNum = devis.length + 1;
     const devNum = `DEV-2026-${String(nextNum).padStart(3, "0")}`;
@@ -299,82 +299,6 @@ export const AppProvider = ({ children }) => {
 
     addLog("Dépense Créée", "Bilel Connor (Admin)", `Dépense de ${expData.montant} € classifiée dans ${expData.categorie}`);
     addToast("success", "Dépense Enregistrée", `Dépense ajoutée avec succès.`);
-  };
-
-  const updateOrderStatus = (id, newStatus) => {
-    const updatedCmds = commandes.map((c) => {
-      if (c.id === id) {
-        if (c.etat !== newStatus) {
-          addLog("Commande Modifiée", "Bilel Connor (Admin)", `Commande ${c.numero} déplacée vers "${newStatus}"`);
-        }
-        return { ...c, etat: newStatus };
-      }
-      return c;
-    });
-    setAndStore("erp-commandes", updatedCmds, setCommandes);
-    addToast("info", "Statut mis à jour", `La commande a été marquée comme "${newStatus}".`);
-  };
-
-  const generateInvoiceFromOrder = (orderId) => {
-    const order = commandes.find((c) => c.id === orderId);
-    if (!order) return;
-
-    if (order.factureLiee) {
-      addToast("info", "Facturation déjà effectuée", `La commande ${order.numero} est déjà liée à la facture ${order.factureLiee}.`);
-      return;
-    }
-
-    const nextNum = ventes.length + 1;
-    const invoiceNum = `FAC-2026-${String(nextNum).padStart(3, "0")}`;
-
-    const newVente = {
-      id: nextNum,
-      facture: invoiceNum,
-      client: order.client,
-      date: new Date().toISOString().split("T")[0],
-      total: order.montant,
-      statut: "Payé"
-    };
-
-    setAndStore("erp-ventes", [newVente, ...ventes], setVentes);
-
-    // Create payment
-    const newPay = {
-      id: Date.now(),
-      client: order.client,
-      facture: invoiceNum,
-      montant: order.montant,
-      statut: "Encaissé",
-      date: newVente.date
-    };
-    setAndStore("erp-paiements-clients", [newPay, ...paiementsClients], setPaiementsClients);
-
-    // Transaction
-    const newTrans = {
-      id: Date.now() + 1,
-      date: newVente.date,
-      type: "Encaissement",
-      description: `Règlement Facture ${invoiceNum} générée depuis Commande ${order.numero}`,
-      montant: order.montant,
-      statut: "Validé"
-    };
-    setAndStore("erp-transactions", [newTrans, ...transactions], setTransactions);
-
-    // Update order status and link invoice
-    const updatedCmds = commandes.map((c) => {
-      if (c.id === orderId) {
-        return { ...c, etat: "Livrée", factureLiee: invoiceNum };
-      }
-      return c;
-    });
-    setAndStore("erp-commandes", updatedCmds, setCommandes);
-
-    addLog(
-      "Liaison Commande Facture",
-      "Bilel Connor (Admin)",
-      `Commande ${order.numero} facturée automatiquement. Facture ${invoiceNum} créée (${order.montant} €).`
-    );
-    addToast("success", "Liaison Facturation", `La commande ${order.numero} a été facturée. Facture ${invoiceNum} créée.`);
   };
 
   const updateSocieteRecord = (socData) => {
@@ -480,7 +404,6 @@ export const AppProvider = ({ children }) => {
         bonsCommande,
         facturesAchat,
         devis,
-        commandes,
         paiementsClients,
         paiementsFournisseurs,
         transactions,
@@ -488,16 +411,17 @@ export const AppProvider = ({ children }) => {
         historique,
         societe,
         utilisateurs,
+        employees,
+        setEmployees,
         addVenteRecord,
         addAchatRecord,
         addDevisRecord,
+        addClientRecord,
         addExpenseRecord,
-        updateOrderStatus,
         updateSocieteRecord,
         updateUserPermissions,
         triggerManualBackup,
-        importBackupData,
-        generateInvoiceFromOrder
+        importBackupData
       }}
     >
       {children}

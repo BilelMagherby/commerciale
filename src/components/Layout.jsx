@@ -18,7 +18,8 @@ import {
   ClipboardList,
   Wallet,
   History,
-  BarChart3
+  BarChart3,
+  Users
 } from "lucide-react";
 
 export default function Layout({ children }) {
@@ -42,11 +43,10 @@ export default function Layout({ children }) {
     { path: "/achats", label: "Achats", icon: ShoppingCart },
     { path: "/ventes", label: "Ventes", icon: TrendingUp },
     { path: "/paiements", label: "Paiements", icon: DollarSign },
-    { path: "/commandes", label: "Commandes", icon: ClipboardList },
+    { path: "/rh", label: "RH", icon: Users },
     { path: "/depenses", label: "Dépenses", icon: TrendingDown },
     { path: "/historique", label: "Historique", icon: History },
     { path: "/rapports", label: "Rapports", icon: BarChart3 },
-    { path: "/parametres", label: "Paramètres", icon: Settings },
   ];
 
   return (
@@ -195,14 +195,6 @@ export default function Layout({ children }) {
                     Super-Administrateur
                   </span>
                 </div>
-                <Link to="/parametres" onClick={() => setShowProfile(false)} className="flex items-center space-x-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
-                  <User className="h-3.5 w-3.5" />
-                  <span>Mon Entreprise</span>
-                </Link>
-                <Link to="/parametres" onClick={() => setShowProfile(false)} className="flex items-center space-x-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors">
-                  <Settings className="h-3.5 w-3.5" />
-                  <span>Configuration</span>
-                </Link>
                 <div className="border-t border-border my-1"></div>
                 <button
                   onClick={() => alert("Simulation de déconnexion. ERP PRO reste actif.")}

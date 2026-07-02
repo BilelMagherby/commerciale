@@ -33,7 +33,6 @@ export default function Dashboard() {
   const {
     ventes,
     achats,
-    commandes,
     depenses,
     historique,
     clients
@@ -50,8 +49,6 @@ export default function Dashboard() {
     .filter(v => v.statut === "En attente")
     .reduce((sum, v) => sum + v.total, 0) +
     ventes.filter(v => v.statut === "Partiel").reduce((sum, v) => sum + v.total * 0.6, 0);
-
-  const pendingOrdersCount = commandes.filter(c => c.etat === "En cours").length;
 
   // Monthly Expenses
   const currentMonthExpenses = depenses.reduce((sum, d) => sum + d.montant, 0);
@@ -90,10 +87,7 @@ export default function Dashboard() {
       color: "from-rose-500/10 to-pink-500/10 text-rose-600 dark:text-rose-400"
     },
     {
-      title: "Commandes en cours",
-      value: `${pendingOrdersCount} Commande${pendingOrdersCount > 1 ? 's' : ''}`,
-      evolution: "+8.0%",
-      isPositive: true,
+      title: "Total Dépenses",
       icon: Briefcase,
       color: "from-violet-500/10 to-purple-500/10 text-violet-600 dark:text-violet-400"
     },

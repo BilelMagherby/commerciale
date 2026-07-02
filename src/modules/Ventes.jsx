@@ -1,22 +1,22 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter, Printer, Eye, DollarSign, Calendar, Package, Mail, Trash2 } from "lucide-react";
+import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter, Printer, Eye, DollarSign, Calendar, Package, Mail, Trash2, Building, Upload } from "lucide-react";
 
 export default function Ventes() {
   const {
     ventes,
     clients,
     devis,
-    commandes,
     searchQuery,
     addVenteRecord,
     addDevisRecord,
+    addClientRecord,
     societe
   } = useApp();
 
   const [activeTab, setActiveTab] = useState("ventes");
-  const [modalType, setModalType] = useState(null); // 'vente', 'devis', or null
+  const [modalType, setModalType] = useState(null); // 'vente', 'devis', 'client', or null
   const [selectedVentePdf, setSelectedVentePdf] = useState(null);
   const [selectedClientHistory, setSelectedClientHistory] = useState(null);
   const [selectedVenteDetails, setSelectedVenteDetails] = useState(null);
@@ -36,6 +36,9 @@ export default function Ventes() {
   const [total, setTotal] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [statut, setStatut] = useState("En attente");
+  const [venteItems, setVenteItems] = useState([
+    { id: 1, article: "", quantity: "1", unitPrice: "", description: "" }
+  ]);
 
   const [devisClient, setDevisClient] = useState(clients[0]?.nom || "");
   const [devisDate, setDevisDate] = useState(new Date().toISOString().split("T")[0]);
@@ -45,16 +48,96 @@ export default function Ventes() {
     { id: 1, article: "", length: "", width: "", quantity: "1", unitPrice: "" }
   ]);
 
+  // New Client form states
+  const [newClient, setNewClient] = useState({
+    // 1. Informations générales
+    typeClient: "Particulier",
+    nom: "",
+    nomCommercial: "",
+    responsable: "",
+    cin: "",
+    matriculeFiscal: "",
+    registreCommerce: "",
+    tva: "",
+    statut: "Actif",
+    // 2. Coordonnées
+    telephonePrincipal: "",
+    telephoneSecondaire: "",
+    whatsapp: "",
+    email: "",
+    siteWeb: "",
+    // 3. Adresse
+    gouvernorat: "",
+    ville: "",
+    delegation: "",
+    codePostal: "",
+    adresseComplete: "",
+    adresseChantier: "",
+    // 4. Informations Commerciales
+    commercialResponsable: "",
+    sourceClient: "",
+    priorite: "Normale",
+    categorie: "Standard",
+    // 5. Informations Financières
+    plafondCredit: "",
+    soldeInitial: "0",
+    devise: "EUR",
+    conditionsPaiement: "30 jours",
+    remiseDefaut: "0",
+    // 6. Informations Projet
+    projetNom: "",
+    projetType: "",
+    adresseChantierProjet: "",
+    dateDebut: "",
+    dateLivraison: "",
+    surfaceEstimee: "",
+    budgetEstime: "",
+    architecte: "",
+    entrepriseResponsable: "",
+    // 7. Préférences Marbre
+    typePierre: "Marbre",
+    couleurPreferee: "",
+    finition: "Poli",
+    epaisseur: "2 cm",
+    // 8. Documents
+    documents: [],
+    // 9. Notes
+    observations: "",
+    instructionsParticulieres: ""
+  });
+
   const handleCreateVente = (e) => {
     e.preventDefault();
-    if (!total || parseFloat(total) <= 0) {
-      alert("Veuillez saisir un total valide.");
+    
+    // Calculate total from items
+    const calculatedTotal = calculateVenteGrandTotal();
+    
+    if (calculatedTotal <= 0) {
+      alert("Veuillez saisir au moins un article avec une quantité et un prix unitaire.");
       return;
     }
-    addVenteRecord({ client, total, date, statut });
+    
+    const articles = venteItems.map(item => ({
+      nom: item.article,
+      quantite: parseFloat(item.quantity) || 1,
+      prixUnitaire: parseFloat(item.unitPrice) || 0,
+      total: calculateVenteRowTotal(item),
+      description: item.description
+    })).filter(item => item.nom && item.prixUnitaire > 0);
+    
+    addVenteRecord({ 
+      client, 
+      total: calculatedTotal, 
+      date, 
+      statut,
+      articles 
+    });
     setModalType(null);
+    setClient(clients[0]?.nom || "");
     setTotal("");
+    setDate(new Date().toISOString().split("T")[0]);
     setStatut("En attente");
+    setVenteItems([{ id: 1, article: "", quantity: "1", unitPrice: "", description: "" }]);
   };
 
   const handleCreateDevis = (e) => {
@@ -114,6 +197,23 @@ export default function Ventes() {
     ));
   };
 
+  const addVenteItemRow = () => {
+    const newId = Math.max(...venteItems.map(item => item.id), 0) + 1;
+    setVenteItems([...venteItems, { id: newId, article: "", quantity: "1", unitPrice: "", description: "" }]);
+  };
+
+  const removeVenteItemRow = (id) => {
+    if (venteItems.length > 1) {
+      setVenteItems(venteItems.filter(item => item.id !== id));
+    }
+  };
+
+  const updateVenteItemRow = (id, field, value) => {
+    setVenteItems(venteItems.map(item => 
+      item.id === id ? { ...item, [field]: value } : item
+    ));
+  };
+
   const calculateRowTotal = (item) => {
     const length = parseFloat(item.length) || 0;
     const width = parseFloat(item.width) || 0;
@@ -124,6 +224,78 @@ export default function Ventes() {
 
   const calculateGrandTotal = () => {
     return devisItems.reduce((sum, item) => sum + calculateRowTotal(item), 0);
+  };
+
+  const calculateVenteRowTotal = (item) => {
+    const quantity = parseFloat(item.quantity) || 0;
+    const unitPrice = parseFloat(item.unitPrice) || 0;
+    return quantity * unitPrice;
+  };
+
+  const calculateVenteGrandTotal = () => {
+    return venteItems.reduce((sum, item) => sum + calculateVenteRowTotal(item), 0);
+  };
+
+  const handleCreateClient = (e) => {
+    e.preventDefault();
+    
+    if (!newClient.nom) {
+      alert("Veuillez saisir le nom du client.");
+      return;
+    }
+    
+    addClientRecord(newClient);
+    
+    // Reset form
+    setNewClient({
+      typeClient: "Particulier",
+      nom: "",
+      nomCommercial: "",
+      responsable: "",
+      cin: "",
+      matriculeFiscal: "",
+      registreCommerce: "",
+      tva: "",
+      statut: "Actif",
+      telephonePrincipal: "",
+      telephoneSecondaire: "",
+      whatsapp: "",
+      email: "",
+      siteWeb: "",
+      gouvernorat: "",
+      ville: "",
+      delegation: "",
+      codePostal: "",
+      adresseComplete: "",
+      adresseChantier: "",
+      commercialResponsable: "",
+      sourceClient: "",
+      priorite: "Normale",
+      categorie: "Standard",
+      plafondCredit: "",
+      soldeInitial: "0",
+      devise: "EUR",
+      conditionsPaiement: "30 jours",
+      remiseDefaut: "0",
+      projetNom: "",
+      projetType: "",
+      adresseChantierProjet: "",
+      dateDebut: "",
+      dateLivraison: "",
+      surfaceEstimee: "",
+      budgetEstime: "",
+      architecte: "",
+      entrepriseResponsable: "",
+      typePierre: "Marbre",
+      couleurPreferee: "",
+      finition: "Poli",
+      epaisseur: "2 cm",
+      documents: [],
+      observations: "",
+      instructionsParticulieres: ""
+    });
+    
+    setModalType(null);
   };
 
   // Filter listings based on global search query
@@ -270,23 +442,33 @@ export default function Ventes() {
 
         {activeTab === "clients" && (
           <div className="space-y-4">
-            {/* Client filters */}
-            <div className="flex flex-wrap items-center gap-4 bg-card border border-border/80 p-4 rounded-xl shadow-sm text-xs">
-              <div className="flex items-center space-x-2">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                <span className="font-bold text-foreground">Filtres :</span>
+            {/* Client filters and add button */}
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-card border border-border/80 p-4 rounded-xl shadow-sm text-xs">
+              <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center space-x-2">
+                  <Filter className="w-4 h-4 text-muted-foreground" />
+                  <span className="font-bold text-foreground">Filtres :</span>
+                </div>
+                
+                <div className="flex items-center space-x-1 bg-secondary px-2 py-1 rounded-lg">
+                  <span className="text-muted-foreground font-semibold">Nom :</span>
+                  <input
+                    type="text"
+                    placeholder="Filtrer par nom..."
+                    value={clientNameFilter}
+                    onChange={(e) => setClientNameFilter(e.target.value)}
+                    className="bg-transparent text-foreground font-bold focus:outline-none placeholder-muted-foreground/60 w-32"
+                  />
+                </div>
               </div>
               
-              <div className="flex items-center space-x-1 bg-secondary px-2 py-1 rounded-lg">
-                <span className="text-muted-foreground font-semibold">Nom :</span>
-                <input
-                  type="text"
-                  placeholder="Filtrer par nom..."
-                  value={clientNameFilter}
-                  onChange={(e) => setClientNameFilter(e.target.value)}
-                  className="bg-transparent text-foreground font-bold focus:outline-none placeholder-muted-foreground/60 w-32"
-                />
-              </div>
+              <button
+                onClick={() => setModalType("client")}
+                className="inline-flex items-center space-x-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs px-3.5 py-2.5 rounded-xl shadow-md shadow-indigo-600/10 hover:shadow-lg transition-all active:scale-95 cursor-pointer"
+              >
+                <Plus className="h-4 w-4" />
+                <span>Nouveau Client</span>
+              </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -455,17 +637,92 @@ export default function Ventes() {
             </select>
           </div>
 
-          <div>
-            <label className="block font-semibold mb-1 text-muted-foreground">Total de la transaction TTC (€)</label>
-            <input
-              type="number"
-              step="0.01"
-              required
-              placeholder="Ex: 5000.00"
-              value={total}
-              onChange={(e) => setTotal(e.target.value)}
-              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-            />
+          {/* Items Table */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block font-semibold text-muted-foreground">Articles / Produits</label>
+              <button
+                type="button"
+                onClick={addVenteItemRow}
+                className="inline-flex items-center space-x-1 px-3 py-1.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg hover:bg-indigo-500/20 transition-colors text-xs font-medium"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Ajouter</span>
+              </button>
+            </div>
+
+            <div className="border border-border rounded-lg overflow-hidden">
+              <table className="w-full text-left">
+                <thead className="bg-secondary/50">
+                  <tr>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground">Article</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-20">Quantité</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-24">Prix Unitaire (€)</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-24">Total (€)</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-10"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {venteItems.map((item, index) => (
+                    <tr key={item.id} className="hover:bg-secondary/30">
+                      <td className="px-3 py-2">
+                        <input
+                          type="text"
+                          placeholder="Nom de l'article"
+                          value={item.article}
+                          onChange={(e) => updateVenteItemRow(item.id, "article", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="1"
+                          placeholder="1"
+                          value={item.quantity}
+                          onChange={(e) => updateVenteItemRow(item.id, "quantity", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={item.unitPrice}
+                          onChange={(e) => updateVenteItemRow(item.id, "unitPrice", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <span className="font-semibold text-foreground">
+                          {calculateVenteRowTotal(item).toLocaleString("fr-FR", { minimumFractionDigits: 2 })}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2">
+                        {venteItems.length > 1 && (
+                          <button
+                            type="button"
+                            onClick={() => removeVenteItemRow(item.id)}
+                            className="p-1 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 rounded transition-colors"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Grand Total */}
+            <div className="flex justify-end items-center space-x-4 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 border border-indigo-500/20 rounded-xl p-4">
+              <span className="text-xs font-semibold text-muted-foreground">Total TTC:</span>
+              <span className="text-lg font-bold text-foreground">
+                {calculateVenteGrandTotal().toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+              </span>
+            </div>
           </div>
 
           <div>
@@ -689,6 +946,72 @@ export default function Ventes() {
         </form>
       </Modal>
 
+      {/* Nouveau Client Modal */}
+      <Modal isOpen={modalType === "client"} onClose={() => setModalType(null)} title="Nouveau Client">
+        <form onSubmit={handleCreateClient} className="space-y-4 text-xs">
+          <div>
+            <label className="block font-semibold mb-1 text-muted-foreground">Nom / Raison Sociale *</label>
+            <input
+              type="text"
+              required
+              value={newClient.nom}
+              onChange={(e) => setNewClient({...newClient, nom: e.target.value})}
+              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+              placeholder="Nom du client ou de l'entreprise"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-muted-foreground">Téléphone</label>
+            <input
+              type="tel"
+              value={newClient.telephonePrincipal}
+              onChange={(e) => setNewClient({...newClient, telephonePrincipal: e.target.value})}
+              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+              placeholder="+33 6 12 34 56 78"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-muted-foreground">Email</label>
+            <input
+              type="email"
+              value={newClient.email}
+              onChange={(e) => setNewClient({...newClient, email: e.target.value})}
+              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+              placeholder="client@example.com"
+            />
+          </div>
+
+          <div>
+            <label className="block font-semibold mb-1 text-muted-foreground">Adresse</label>
+            <input
+              type="text"
+              value={newClient.adresseComplete}
+              onChange={(e) => setNewClient({...newClient, adresseComplete: e.target.value})}
+              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+              placeholder="Adresse complète"
+            />
+          </div>
+
+          <div className="flex space-x-3 pt-4 border-t border-border mt-6">
+            <button
+              type="submit"
+              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-sm hover:shadow active:scale-95 transition-all text-xs cursor-pointer"
+            >
+              Enregistrer
+            </button>
+            <button
+              type="button"
+              onClick={() => setModalType(null)}
+              className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-foreground font-semibold rounded-lg transition-colors text-xs cursor-pointer"
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+      </Modal>
+
       {/* Client Historique Modal */}
       <Modal isOpen={!!selectedClientHistory} onClose={() => setSelectedClientHistory(null)} title={`Historique - ${selectedClientHistory?.nom}`}>
         {selectedClientHistory && (
@@ -699,7 +1022,491 @@ export default function Ventes() {
                 <span className="font-semibold">Actions récentes pour ce client</span>
               </div>
               <div className="space-y-2">
-                {/* Simulated client history based on ventes, devis, and commandes */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-foreground flex items-center space-x-2">
+              <Phone className="h-4 w-4 text-indigo-500" />
+              <span>Coordonnées</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Téléphone Principal</label>
+                <input
+                  type="tel"
+                  value={newClient.telephonePrincipal}
+                  onChange={(e) => setNewClient({...newClient, telephonePrincipal: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Téléphone Secondaire</label>
+                <input
+                  type="tel"
+                  value={newClient.telephoneSecondaire}
+                  onChange={(e) => setNewClient({...newClient, telephoneSecondaire: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">WhatsApp</label>
+                <input
+                  type="tel"
+                  value={newClient.whatsapp}
+                  onChange={(e) => setNewClient({...newClient, whatsapp: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Email</label>
+                <input
+                  type="email"
+                  value={newClient.email}
+                  onChange={(e) => setNewClient({...newClient, email: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block font-semibold mb-1 text-muted-foreground">Site Web (optionnel)</label>
+                <input
+                  type="url"
+                  value={newClient.siteWeb}
+                  onChange={(e) => setNewClient({...newClient, siteWeb: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 3. Adresse */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-foreground flex items-center space-x-2">
+              <MapPin className="h-4 w-4 text-indigo-500" />
+              <span>Adresse</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Gouvernorat</label>
+                <input
+                  type="text"
+                  value={newClient.gouvernorat}
+                  onChange={(e) => setNewClient({...newClient, gouvernorat: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Ville</label>
+                <input
+                  type="text"
+                  value={newClient.ville}
+                  onChange={(e) => setNewClient({...newClient, ville: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Délégation</label>
+                <input
+                  type="text"
+                  value={newClient.delegation}
+                  onChange={(e) => setNewClient({...newClient, delegation: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Code Postal</label>
+                <input
+                  type="text"
+                  value={newClient.codePostal}
+                  onChange={(e) => setNewClient({...newClient, codePostal: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block font-semibold mb-1 text-muted-foreground">Adresse complète</label>
+                <input
+                  type="text"
+                  value={newClient.adresseComplete}
+                  onChange={(e) => setNewClient({...newClient, adresseComplete: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div className="col-span-2">
+                <label className="block font-semibold mb-1 text-muted-foreground">Adresse Chantier (si différente)</label>
+                <input
+                  type="text"
+                  value={newClient.adresseChantier}
+                  onChange={(e) => setNewClient({...newClient, adresseChantier: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 4. Informations Commerciales */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-foreground flex items-center space-x-2">
+              <Building className="h-4 w-4 text-indigo-500" />
+              <span>Informations Commerciales</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Commercial Responsable</label>
+                <input
+                  type="text"
+                  value={newClient.commercialResponsable}
+                  onChange={(e) => setNewClient({...newClient, commercialResponsable: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Source du client</label>
+                <select
+                  value={newClient.sourceClient}
+                  onChange={(e) => setNewClient({...newClient, sourceClient: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="">Sélectionner...</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="TikTok">TikTok</option>
+                  <option value="Google">Google</option>
+                  <option value="Recommandation">Recommandation</option>
+                  <option value="Passage magasin">Passage magasin</option>
+                  <option value="Architecte">Architecte</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Priorité</label>
+                <select
+                  value={newClient.priorite}
+                  onChange={(e) => setNewClient({...newClient, priorite: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="Haute">Haute</option>
+                  <option value="Normale">Normale</option>
+                  <option value="Faible">Faible</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Catégorie</label>
+                <select
+                  value={newClient.categorie}
+                  onChange={(e) => setNewClient({...newClient, categorie: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="VIP">VIP</option>
+                  <option value="Standard">Standard</option>
+                  <option value="Revendeur">Revendeur</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* 5. Informations Financières */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-foreground flex items-center space-x-2">
+              <DollarSign className="h-4 w-4 text-indigo-500" />
+              <span>Informations Financières</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Plafond Crédit</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newClient.plafondCredit}
+                  onChange={(e) => setNewClient({...newClient, plafondCredit: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Solde Initial</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newClient.soldeInitial}
+                  onChange={(e) => setNewClient({...newClient, soldeInitial: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Devise</label>
+                <select
+                  value={newClient.devise}
+                  onChange={(e) => setNewClient({...newClient, devise: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="EUR">EUR</option>
+                  <option value="USD">USD</option>
+                  <option value="TND">TND</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Conditions de Paiement</label>
+                <select
+                  value={newClient.conditionsPaiement}
+                  onChange={(e) => setNewClient({...newClient, conditionsPaiement: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="Comptant">Comptant</option>
+                  <option value="30 jours">30 jours</option>
+                  <option value="60 jours">60 jours</option>
+                  <option value="90 jours">90 jours</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block font-semibold mb-1 text-muted-foreground">Remise par défaut (%)</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  value={newClient.remiseDefaut}
+                  onChange={(e) => setNewClient({...newClient, remiseDefaut: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 6. Informations Projet */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-foreground flex items-center space-x-2">
+              <Package className="h-4 w-4 text-indigo-500" />
+              <span>Informations Projet (Très important pour le rkham)</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Nom du Projet</label>
+                <input
+                  type="text"
+                  value={newClient.projetNom}
+                  onChange={(e) => setNewClient({...newClient, projetNom: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Type Projet</label>
+                <select
+                  value={newClient.projetType}
+                  onChange={(e) => setNewClient({...newClient, projetType: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="">Sélectionner...</option>
+                  <option value="Cuisine">Cuisine</option>
+                  <option value="Salle de Bain">Salle de Bain</option>
+                  <option value="Escalier">Escalier</option>
+                  <option value="Sol">Sol</option>
+                  <option value="Mur">Mur</option>
+                  <option value="Façade">Façade</option>
+                  <option value="Plan de Travail">Plan de Travail</option>
+                  <option value="Hôtel">Hôtel</option>
+                  <option value="Villa">Villa</option>
+                  <option value="Appartement">Appartement</option>
+                  <option value="Bureau">Bureau</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+              <div className="col-span-2">
+                <label className="block font-semibold mb-1 text-muted-foreground">Adresse Chantier</label>
+                <input
+                  type="text"
+                  value={newClient.adresseChantierProjet}
+                  onChange={(e) => setNewClient({...newClient, adresseChantierProjet: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Date Début</label>
+                <input
+                  type="date"
+                  value={newClient.dateDebut}
+                  onChange={(e) => setNewClient({...newClient, dateDebut: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Date Livraison Prévue</label>
+                <input
+                  type="date"
+                  value={newClient.dateLivraison}
+                  onChange={(e) => setNewClient({...newClient, dateLivraison: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Surface estimée (m²)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newClient.surfaceEstimee}
+                  onChange={(e) => setNewClient({...newClient, surfaceEstimee: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Budget estimé</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={newClient.budgetEstime}
+                  onChange={(e) => setNewClient({...newClient, budgetEstime: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Architecte</label>
+                <input
+                  type="text"
+                  value={newClient.architecte}
+                  onChange={(e) => setNewClient({...newClient, architecte: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Entreprise responsable</label>
+                <input
+                  type="text"
+                  value={newClient.entrepriseResponsable}
+                  onChange={(e) => setNewClient({...newClient, entrepriseResponsable: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* 7. Préférences Marbre */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-foreground flex items-center space-x-2">
+              <Package className="h-4 w-4 text-indigo-500" />
+              <span>Préférences Marbre</span>
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Type de pierre préféré</label>
+                <select
+                  value={newClient.typePierre}
+                  onChange={(e) => setNewClient({...newClient, typePierre: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="Marbre">Marbre</option>
+                  <option value="Granit">Granit</option>
+                  <option value="Quartz">Quartz</option>
+                  <option value="Dekton">Dekton</option>
+                  <option value="Céramique">Céramique</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Couleur préférée</label>
+                <input
+                  type="text"
+                  value={newClient.couleurPreferee}
+                  onChange={(e) => setNewClient({...newClient, couleurPreferee: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Finition</label>
+                <select
+                  value={newClient.finition}
+                  onChange={(e) => setNewClient({...newClient, finition: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="Poli">Poli</option>
+                  <option value="Adouci">Adouci</option>
+                  <option value="Mat">Mat</option>
+                  <option value="Bush Hammered">Bush Hammered</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Épaisseur</label>
+                <select
+                  value={newClient.epaisseur}
+                  onChange={(e) => setNewClient({...newClient, epaisseur: e.target.value})}
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none"
+                >
+                  <option value="2 cm">2 cm</option>
+                  <option value="3 cm">3 cm</option>
+                  <option value="Autre">Autre</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* 8. Documents */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-foreground flex items-center space-x-2">
+              <Upload className="h-4 w-4 text-indigo-500" />
+              <span>Documents</span>
+            </h4>
+            <div className="border-2 border-dashed border-border/50 rounded-lg p-4 text-center">
+              <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+              <p className="text-muted-foreground text-xs">Upload</p>
+              <div className="flex flex-wrap gap-2 mt-3 justify-center">
+                <span className="text-xs bg-secondary px-2 py-1 rounded">CIN</span>
+                <span className="text-xs bg-secondary px-2 py-1 rounded">Contrat</span>
+                <span className="text-xs bg-secondary px-2 py-1 rounded">Plan PDF</span>
+                <span className="text-xs bg-secondary px-2 py-1 rounded">Photos Chantier</span>
+                <span className="text-xs bg-secondary px-2 py-1 rounded">Devis signé</span>
+                <span className="text-xs bg-secondary px-2 py-1 rounded">Autres Documents</span>
+              </div>
+            </div>
+          </div>
+
+          {/* 9. Notes */}
+          <div className="space-y-3">
+            <h4 className="font-bold text-sm text-foreground flex items-center space-x-2">
+              <FileText className="h-4 w-4 text-indigo-500" />
+              <span>Notes</span>
+            </h4>
+            <div className="space-y-3">
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Observations</label>
+                <textarea
+                  value={newClient.observations}
+                  onChange={(e) => setNewClient({...newClient, observations: e.target.value})}
+                  rows="2"
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none resize-none"
+                />
+              </div>
+              <div>
+                <label className="block font-semibold mb-1 text-muted-foreground">Instructions particulières</label>
+                <textarea
+                  value={newClient.instructionsParticulieres}
+                  onChange={(e) => setNewClient({...newClient, instructionsParticulieres: e.target.value})}
+                  rows="2"
+                  className="w-full p-2 bg-input border border-border rounded-lg text-foreground focus:ring-1 focus:ring-ring focus:outline-none resize-none"
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex space-x-3 pt-4 border-t border-border mt-6">
+            <button
+              type="submit"
+              className="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-semibold rounded-lg shadow-sm hover:shadow active:scale-95 transition-all text-xs cursor-pointer"
+            >
+              Enregistrer
+            </button>
+            <button
+              type="button"
+              onClick={() => setModalType(null)}
+              className="flex-1 py-2.5 bg-secondary hover:bg-secondary/80 text-foreground font-semibold rounded-lg transition-colors text-xs cursor-pointer"
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {/* Client Historique Modal */}
+      <Modal isOpen={!!selectedClientHistory} onClose={() => setSelectedClientHistory(null)} title={`Historique - ${selectedClientHistory?.nom}`}>
+        {selectedClientHistory && (
+          <div className="space-y-4 text-xs">
+            <div className="bg-secondary/30 p-3 rounded-lg">
+              <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                <Clock className="h-4 w-4" />
+                <span className="font-semibold">Actions récentes pour ce client</span>
+              </div>
+              <div className="space-y-2">
+                {/* Simulated client history based on ventes and devis */}
                 {ventes.filter(v => v.client === selectedClientHistory.nom).map((v) => (
                   <button
                     key={v.id}
@@ -737,27 +1544,8 @@ export default function Ventes() {
                     </div>
                   </button>
                 ))}
-                {commandes.filter(cmd => cmd.client === selectedClientHistory.nom).map((cmd) => (
-                  <button
-                    key={cmd.id}
-                    onClick={() => setSelectedHistoryAction({ type: 'commande', data: cmd })}
-                    className="bg-card p-2 rounded border border-border/50 w-full text-left hover:bg-secondary/50 transition-colors cursor-pointer"
-                  >
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <span className="font-bold text-foreground">{cmd.numero}</span>
-                        <span className="text-muted-foreground ml-2">Commande</span>
-                      </div>
-                      <span className="text-muted-foreground">{cmd.date}</span>
-                    </div>
-                    <div className="mt-1 text-muted-foreground">
-                      Montant: {cmd.montant.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} € - État: {cmd.etat}
-                    </div>
-                  </button>
-                ))}
                 {ventes.filter(v => v.client === selectedClientHistory.nom).length === 0 && 
-                 devis.filter(d => d.client === selectedClientHistory.nom).length === 0 && 
-                 commandes.filter(cmd => cmd.client === selectedClientHistory.nom).length === 0 && (
+                 devis.filter(d => d.client === selectedClientHistory.nom).length === 0 && (
                   <div className="text-center py-4 text-muted-foreground">
                     Aucune action enregistrée pour ce client.
                   </div>
@@ -1185,6 +1973,43 @@ export default function Ventes() {
                       <span className="text-muted-foreground">Solde: {client.solde.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
                     </div>
                   </div>
+                </div>
+              )}
+
+              {/* Articles achetés section */}
+              {selectedVenteDetails.articles && selectedVenteDetails.articles.length > 0 ? (
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Package className="h-4 w-4" />
+                    <span className="font-semibold">Articles achetés</span>
+                  </div>
+                  <div className="space-y-2">
+                    {selectedVenteDetails.articles.map((article, idx) => (
+                      <div key={idx} className="bg-card p-2 rounded border border-border/50">
+                        <p className="font-bold text-foreground">{article.nom}</p>
+                        <div className="flex items-center space-x-3 text-xs text-muted-foreground mt-1">
+                          <span>Quantité: {article.quantite}</span>
+                          {article.prixUnitaire && (
+                            <span>Prix unitaire: {article.prixUnitaire.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
+                          )}
+                          {article.total && (
+                            <span className="font-semibold text-foreground">Total: {article.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</span>
+                          )}
+                        </div>
+                        {article.description && (
+                          <p className="text-muted-foreground text-xs italic mt-1">{article.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="bg-secondary/30 p-3 rounded-lg">
+                  <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                    <Package className="h-4 w-4" />
+                    <span className="font-semibold">Articles achetés</span>
+                  </div>
+                  <p className="text-muted-foreground text-xs">Aucun article détaillé disponible pour cette vente.</p>
                 </div>
               )}
             </div>
