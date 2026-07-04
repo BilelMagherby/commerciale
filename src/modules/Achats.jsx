@@ -2,6 +2,14 @@ import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
 import { Plus, Search, FileText, Download, Building, Phone, Mail, MapPin, Filter, Eye, Calendar, Truck, User, AlertCircle, Printer, DollarSign, CheckCircle, Package } from "lucide-react";
+import { usePrint } from "../components/print/usePrint";
+import {
+  AchatsListPrintTemplate,
+  AchatDetailPrintTemplate,
+  BonCommandePrintTemplate,
+  FournisseurDetailPrintTemplate,
+  FactureAchatPrintTemplate
+} from "../components/print/templates/AchatsPrintTemplate";
 
 export default function Achats() {
   const {
@@ -13,6 +21,8 @@ export default function Achats() {
     addAchatRecord
   } = useApp();
 
+  const { printDocument } = usePrint();
+
   const [activeTab, setActiveTab] = useState("achats");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPdf, setSelectedPdf] = useState(null);
@@ -22,7 +32,48 @@ export default function Achats() {
   const [selectedFactureDetails, setSelectedFactureDetails] = useState(null);
 
   const handlePrint = () => {
-    window.print();
+    const printContent = AchatsListPrintTemplate({
+      achats: filteredAchats,
+      period: "Tout",
+      documentNumber: `ACH-${new Date().toISOString().split('T')[0]}`
+    });
+    printDocument(printContent, 'Rapport des Achats');
+  };
+
+  const handlePrintAchatDetails = () => {
+    if (!selectedAchatDetails) return;
+    const fournisseur = fournisseurs.find(f => f.nom === selectedAchatDetails.fournisseur);
+    const printContent = AchatDetailPrintTemplate({
+      achat: selectedAchatDetails,
+      fournisseur
+    });
+    printDocument(printContent, `Achat-${selectedAchatDetails.reference}`);
+  };
+
+  const handlePrintBonCommande = () => {
+    if (!selectedBonDetails) return;
+    const printContent = BonCommandePrintTemplate({ bonCommande: selectedBonDetails });
+    printDocument(printContent, `BonCommande-${selectedBonDetails.numero}`);
+  };
+
+  const handlePrintFournisseurDetails = () => {
+    if (!selectedFournisseurDetails) return;
+    const fournisseurAchats = achats.filter(a => a.fournisseur === selectedFournisseurDetails.nom);
+    const printContent = FournisseurDetailPrintTemplate({
+      fournisseur: selectedFournisseurDetails,
+      achats: fournisseurAchats
+    });
+    printDocument(printContent, `Fournisseur-${selectedFournisseurDetails.nom}`);
+  };
+
+  const handlePrintFactureDetails = () => {
+    if (!selectedFactureDetails) return;
+    const achat = achats.find(a => a.fournisseur === selectedFactureDetails.fournisseur && a.date === selectedFactureDetails.date);
+    const printContent = FactureAchatPrintTemplate({
+      facture: selectedFactureDetails,
+      achat
+    });
+    printDocument(printContent, `Facture-${selectedFactureDetails.numero}`);
   };
 
   // Filter States for Achats
@@ -30,34 +81,69 @@ export default function Achats() {
   const [searchProduct, setSearchProduct] = useState("");
 
   // New purchase form state
-  const [fournisseur, setFournisseur] = useState(fournisseurs[0]?.nom || "");
+  const [fournisseur, setFournisseur] = useState("Thala Beige");
   const [fournisseurNom, setFournisseurNom] = useState("");
   const [matriculeFiscale, setMatriculeFiscale] = useState("");
   const [montant, setMontant] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [statut, setStatut] = useState("En attente");
-  const [articleNom, setArticleNom] = useState("");
-  const [articleQuantite, setArticleQuantite] = useState("");
-  const [articlePrixUnitaire, setArticlePrixUnitaire] = useState("");
-  const [articleDescription, setArticleDescription] = useState("");
+  
+  // Multiple articles state
+  const [achatItems, setAchatItems] = useState([
+    { id: 1, nom: "", quantite: "", largeur: "", longueur: "", prixUnitaire: "", description: "" }
+  ]);
+
+  // Helper functions for items management
+  const addAchatItemRow = () => {
+    setAchatItems([...achatItems, { id: Date.now(), nom: "", quantite: "", largeur: "", longueur: "", prixUnitaire: "", description: "" }]);
+  };
+
+  const removeAchatItemRow = (id) => {
+    if (achatItems.length > 1) {
+      setAchatItems(achatItems.filter(item => item.id !== id));
+    }
+  };
+
+  const updateAchatItemRow = (id, field, value) => {
+    setAchatItems(achatItems.map(item => item.id === id ? { ...item, [field]: value } : item));
+  };
+
+  // Calculate row total (quantite * largeur * longueur * prixUnitaire for marble)
+  const calculateAchatRowTotal = (item) => {
+    const quantite = parseFloat(item.quantite) || 0;
+    const largeur = parseFloat(item.largeur) || 0;
+    const longueur = parseFloat(item.longueur) || 0;
+    const prixUnitaire = parseFloat(item.prixUnitaire) || 0;
+    return quantite * largeur * longueur * prixUnitaire;
+  };
+
+  // Calculate grand total
+  const calculateAchatGrandTotal = () => {
+    return achatItems.reduce((sum, item) => sum + calculateAchatRowTotal(item), 0);
+  };
 
   const handleCreateAchat = (e) => {
     e.preventDefault();
-    if (!montant || parseFloat(montant) <= 0) {
-      alert("Veuillez saisir un montant valide.");
+    const grandTotal = calculateAchatGrandTotal();
+    if (grandTotal <= 0) {
+      alert("Veuillez saisir au moins un article avec des valeurs valides.");
       return;
     }
+    
     const selectedFournisseur = fournisseurs.find(f => f.nom === fournisseur);
-    const articles = articleNom ? [{
-      nom: articleNom,
-      quantite: parseInt(articleQuantite) || 1,
-      prixUnitaire: parseFloat(articlePrixUnitaire) || 0,
-      description: articleDescription
-    }] : [];
+    const articles = achatItems.filter(item => item.nom && item.prixUnitaire).map(item => ({
+      nom: item.nom,
+      quantite: parseFloat(item.quantite) || 0,
+      largeur: parseFloat(item.largeur) || 0,
+      longueur: parseFloat(item.longueur) || 0,
+      prixUnitaire: parseFloat(item.prixUnitaire) || 0,
+      total: calculateAchatRowTotal(item),
+      description: item.description
+    }));
 
     addAchatRecord({
       fournisseur,
-      montant,
+      montant: grandTotal,
       date,
       statut,
       fournisseurNom: fournisseurNom || selectedFournisseur?.nom || "",
@@ -70,10 +156,7 @@ export default function Achats() {
     setStatut("En attente");
     setFournisseurNom("");
     setMatriculeFiscale("");
-    setArticleNom("");
-    setArticleQuantite("");
-    setArticlePrixUnitaire("");
-    setArticleDescription("");
+    setAchatItems([{ id: 1, nom: "", quantite: "", largeur: "", longueur: "", prixUnitaire: "", description: "" }]);
   };
 
   // Filter listings based on global search query
@@ -435,9 +518,10 @@ export default function Achats() {
               }}
               className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
             >
-              {fournisseurs.map((f) => (
-                <option key={f.id} value={f.nom}>{f.nom}</option>
-              ))}
+              <option value="Thala Beige">Thala Beige</option>
+              <option value="Thala Gris">Thala Gris</option>
+              <option value="Gris Foussana">Gris Foussana</option>
+              <option value="Noir Aziza">Noir Aziza</option>
             </select>
           </div>
 
@@ -464,65 +548,113 @@ export default function Achats() {
           </div>
 
           <div className="border-t border-border pt-4">
-            <h4 className="font-bold text-foreground mb-3">Détails de l'article</h4>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-bold text-foreground">Détails de l'article</h4>
+              <button
+                type="button"
+                onClick={addAchatItemRow}
+                className="inline-flex items-center space-x-1 bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2 py-1 rounded cursor-pointer"
+              >
+                <Plus className="h-3 w-3" />
+                <span>Ajouter</span>
+              </button>
+            </div>
             <div className="space-y-3">
-              <div>
-                <label className="block font-semibold mb-1 text-muted-foreground">Nom de l'article</label>
-                <input
-                  type="text"
-                  placeholder="Ex: Matériaux construction"
-                  value={articleNom}
-                  onChange={(e) => setArticleNom(e.target.value)}
-                  className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block font-semibold mb-1 text-muted-foreground">Quantité</label>
-                  <input
-                    type="number"
-                    placeholder="Ex: 100"
-                    value={articleQuantite}
-                    onChange={(e) => setArticleQuantite(e.target.value)}
-                    className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-                  />
+              {achatItems.map((item, index) => (
+                <div key={item.id} className="bg-secondary/30 p-3 rounded-lg border border-border/50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold text-muted-foreground">Article {index + 1}</span>
+                    {achatItems.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => removeAchatItemRow(item.id)}
+                        className="text-red-500 hover:text-red-600 cursor-pointer"
+                      >
+                        <span className="text-xs">Supprimer</span>
+                      </button>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    <div>
+                      <label className="block font-semibold mb-1 text-muted-foreground">Nom de l'article</label>
+                      <input
+                        type="text"
+                        placeholder="Ex: Matériaux construction"
+                        value={item.nom}
+                        onChange={(e) => updateAchatItemRow(item.id, 'nom', e.target.value)}
+                        className="w-full p-2 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                      />
+                    </div>
+                    <div className="grid grid-cols-4 gap-2">
+                      <div>
+                        <label className="block font-semibold mb-1 text-muted-foreground">Quantité</label>
+                        <input
+                          type="number"
+                          placeholder="Ex: 100"
+                          value={item.quantite}
+                          onChange={(e) => updateAchatItemRow(item.id, 'quantite', e.target.value)}
+                          className="w-full p-2 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold mb-1 text-muted-foreground">Largeur (m)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Ex: 2.5"
+                          value={item.largeur}
+                          onChange={(e) => updateAchatItemRow(item.id, 'largeur', e.target.value)}
+                          className="w-full p-2 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold mb-1 text-muted-foreground">Longueur (m)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Ex: 1.5"
+                          value={item.longueur}
+                          onChange={(e) => updateAchatItemRow(item.id, 'longueur', e.target.value)}
+                          className="w-full p-2 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block font-semibold mb-1 text-muted-foreground">Prix Unitaire (€)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="Ex: 45.00"
+                          value={item.prixUnitaire}
+                          onChange={(e) => updateAchatItemRow(item.id, 'prixUnitaire', e.target.value)}
+                          className="w-full p-2 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block font-semibold mb-1 text-muted-foreground">Description</label>
+                      <textarea
+                        placeholder="Description détaillée de l'article"
+                        value={item.description}
+                        onChange={(e) => updateAchatItemRow(item.id, 'description', e.target.value)}
+                        rows="2"
+                        className="w-full p-2 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none resize-none"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between bg-card p-2 rounded border border-border/50">
+                      <span className="text-muted-foreground">Total ligne:</span>
+                      <span className="font-bold text-foreground">{calculateAchatRowTotal(item).toFixed(2)} €</span>
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <label className="block font-semibold mb-1 text-muted-foreground">Prix Unitaire (€)</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    placeholder="Ex: 45.00"
-                    value={articlePrixUnitaire}
-                    onChange={(e) => setArticlePrixUnitaire(e.target.value)}
-                    className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block font-semibold mb-1 text-muted-foreground">Description</label>
-                <textarea
-                  placeholder="Description détaillée de l'article"
-                  value={articleDescription}
-                  onChange={(e) => setArticleDescription(e.target.value)}
-                  rows="2"
-                  className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none resize-none"
-                />
-              </div>
+              ))}
             </div>
           </div>
 
-          <div>
-            <label className="block font-semibold mb-1 text-muted-foreground">Montant Total (€)</label>
-            <input
-              type="number"
-              step="0.01"
-              required
-              placeholder="Ex: 1250.00"
-              value={montant}
-              onChange={(e) => setMontant(e.target.value)}
-              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-            />
+          <div className="bg-indigo-50 dark:bg-indigo-900/20 p-3 rounded-lg border border-indigo-200 dark:border-indigo-800">
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-foreground">Montant Total (€)</span>
+              <span className="font-extrabold text-lg text-indigo-600 dark:text-indigo-400">{calculateAchatGrandTotal().toFixed(2)} €</span>
+            </div>
           </div>
 
           <div>
@@ -571,7 +703,7 @@ export default function Achats() {
       <Modal isOpen={!!selectedBonDetails} onClose={() => setSelectedBonDetails(null)} title={`Détails Bon de Commande : ${selectedBonDetails?.numero}`}>
         <div className="flex justify-end mb-4">
           <button
-            onClick={handlePrint}
+            onClick={handlePrintBonCommande}
             className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
           >
             <Printer className="h-4 w-4" />
@@ -698,7 +830,7 @@ export default function Achats() {
       <Modal isOpen={!!selectedAchatDetails} onClose={() => setSelectedAchatDetails(null)} title={`Détails Achat : ${selectedAchatDetails?.reference}`}>
         <div className="flex justify-end mb-4">
           <button
-            onClick={handlePrint}
+            onClick={handlePrintAchatDetails}
             className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
           >
             <Printer className="h-4 w-4" />
@@ -852,7 +984,7 @@ export default function Achats() {
       <Modal isOpen={!!selectedFournisseurDetails} onClose={() => setSelectedFournisseurDetails(null)} title={`Détails Fournisseur : ${selectedFournisseurDetails?.nom}`}>
         <div className="flex justify-end mb-4">
           <button
-            onClick={handlePrint}
+            onClick={handlePrintFournisseurDetails}
             className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
           >
             <Printer className="h-4 w-4" />
@@ -978,7 +1110,7 @@ export default function Achats() {
       <Modal isOpen={!!selectedFactureDetails} onClose={() => setSelectedFactureDetails(null)} title={`Détails Facture : ${selectedFactureDetails?.numero}`}>
         <div className="flex justify-end mb-4">
           <button
-            onClick={handlePrint}
+            onClick={handlePrintFactureDetails}
             className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
           >
             <Printer className="h-4 w-4" />

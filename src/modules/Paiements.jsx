@@ -1,7 +1,16 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { DollarSign, Inbox, Percent, ArrowUpRight, ArrowDownRight, FileText, Download, Eye, User, Calendar, CheckCircle } from "lucide-react";
+import { DollarSign, Inbox, Percent, ArrowUpRight, ArrowDownRight, FileText, Download, Eye, User, Calendar, CheckCircle, Printer } from "lucide-react";
+import { usePrint } from "../components/print/usePrint";
+import {
+  PaiementsClientsPrintTemplate,
+  PaiementsFournisseursPrintTemplate,
+  PaiementsTransactionsPrintTemplate,
+  PaiementClientDetailPrintTemplate,
+  PaiementFournisseurDetailPrintTemplate,
+  TransactionDetailPrintTemplate
+} from "../components/print/templates/PaiementsPrintTemplate";
 
 export default function Paiements() {
   const {
@@ -11,6 +20,46 @@ export default function Paiements() {
     searchQuery,
     ventes
   } = useApp();
+
+  const { printDocument } = usePrint();
+
+  const handlePrintPaiementClientDetails = () => {
+    if (!selectedPaiementClient) return;
+    const printContent = PaiementClientDetailPrintTemplate({ paiement: selectedPaiementClient });
+    printDocument(printContent, `Paiement-Client-${selectedPaiementClient.facture}`);
+  };
+
+  const handlePrintPaiementFournisseurDetails = () => {
+    if (!selectedPaiementFournisseur) return;
+    const printContent = PaiementFournisseurDetailPrintTemplate({ paiement: selectedPaiementFournisseur });
+    printDocument(printContent, `Paiement-Fournisseur-${selectedPaiementFournisseur.fournisseur}`);
+  };
+
+  const handlePrintTransactionDetails = () => {
+    if (!selectedTransaction) return;
+    const printContent = TransactionDetailPrintTemplate({ transaction: selectedTransaction });
+    printDocument(printContent, `Transaction-${selectedTransaction.date}`);
+  };
+
+  const handlePrintCurrentTab = () => {
+    let printContent = "";
+    let documentTitle = "Rapport de Paiements";
+
+    if (activeTab === "clients") {
+      printContent = PaiementsClientsPrintTemplate({ paiements: filteredClientPays, period: "Tout", documentNumber: `PAIEMENTS-CLIENTS-${new Date().toISOString().split('T')[0]}` });
+      documentTitle = "Rapport Paiements Clients";
+    } else if (activeTab === "fournisseurs") {
+      printContent = PaiementsFournisseursPrintTemplate({ paiements: filteredFournPays, period: "Tout", documentNumber: `PAIEMENTS-FOURNISSEURS-${new Date().toISOString().split('T')[0]}` });
+      documentTitle = "Rapport Paiements Fournisseurs";
+    } else if (activeTab === "transactions") {
+      printContent = PaiementsTransactionsPrintTemplate({ transactions: filteredTrans, period: "Tout", documentNumber: `TRANSACTIONS-${new Date().toISOString().split('T')[0]}` });
+      documentTitle = "Rapport Transactions";
+    } else {
+      return;
+    }
+
+    printDocument(printContent, documentTitle);
+  };
 
   const [activeTab, setActiveTab] = useState("clients");
   const [selectedPaiementClient, setSelectedPaiementClient] = useState(null);
@@ -85,14 +134,24 @@ export default function Paiements() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
-      <div>
-        <h1 className="font-heading font-extrabold text-3xl tracking-tight text-foreground m-0">
-          Trésorerie & Règlements
-        </h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Suivez les flux de caisse, les encaissements clients, les décaissements fournisseurs et auditez les pièces de caisse.
-        </p>
+      {/* Action Buttons */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="font-heading font-extrabold text-3xl tracking-tight text-foreground m-0">
+            Trésorerie & Règlements
+          </h1>
+          <p className="text-muted-foreground text-sm mt-1">
+            Suivez les flux de caisse, les encaissements clients, les décaissements fournisseurs et auditez les pièces de caisse.
+          </p>
+        </div>
+        <button
+          onClick={handlePrintCurrentTab}
+          className="inline-flex items-center justify-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-4 py-2.5 rounded-xl border border-border transition-all duration-150 cursor-pointer"
+          title="Imprimer le rapport"
+        >
+          <Printer className="h-4 w-4" />
+          <span>Imprimer le rapport</span>
+        </button>
       </div>
 
       {/* Stats Summary */}
@@ -327,9 +386,18 @@ export default function Paiements() {
             <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="p-4 border-b border-border flex justify-between items-center">
                 <h3 className="font-bold text-sm">Détails Paiement Client</h3>
-                <button onClick={() => setSelectedPaiementClient(null)} className="text-muted-foreground hover:text-foreground">
-                  <CheckCircle className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrintPaiementClientDetails}
+                    className="inline-flex items-center justify-center p-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
+                    title="Imprimer"
+                  >
+                    <Printer className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => setSelectedPaiementClient(null)} className="text-muted-foreground hover:text-foreground">
+                    <CheckCircle className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <div className="p-4 space-y-4 text-xs">
                 <div className="grid grid-cols-2 gap-4">
@@ -382,9 +450,18 @@ export default function Paiements() {
             <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="p-4 border-b border-border flex justify-between items-center">
                 <h3 className="font-bold text-sm">Détails Paiement Fournisseur</h3>
-                <button onClick={() => setSelectedPaiementFournisseur(null)} className="text-muted-foreground hover:text-foreground">
-                  <CheckCircle className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrintPaiementFournisseurDetails}
+                    className="inline-flex items-center justify-center p-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
+                    title="Imprimer"
+                  >
+                    <Printer className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => setSelectedPaiementFournisseur(null)} className="text-muted-foreground hover:text-foreground">
+                    <CheckCircle className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <div className="p-4 space-y-4 text-xs">
                 <div className="bg-secondary/30 p-3 rounded-lg">
@@ -428,9 +505,18 @@ export default function Paiements() {
             <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
               <div className="p-4 border-b border-border flex justify-between items-center">
                 <h3 className="font-bold text-sm">Détails Transaction</h3>
-                <button onClick={() => setSelectedTransaction(null)} className="text-muted-foreground hover:text-foreground">
-                  <CheckCircle className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrintTransactionDetails}
+                    className="inline-flex items-center justify-center p-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
+                    title="Imprimer"
+                  >
+                    <Printer className="h-4 w-4" />
+                  </button>
+                  <button onClick={() => setSelectedTransaction(null)} className="text-muted-foreground hover:text-foreground">
+                    <CheckCircle className="h-4 w-4" />
+                  </button>
+                </div>
               </div>
               <div className="p-4 space-y-4 text-xs">
                 <div className="grid grid-cols-2 gap-4">

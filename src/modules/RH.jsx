@@ -5,8 +5,11 @@ import {
   Calendar, DollarSign, Clock, FileText, MessageSquare, X,
   Edit, Eye, Download as DownloadIcon, Upload, CheckCircle,
   AlertCircle, Clock as ClockIcon, Briefcase, User,
-  ArrowLeft, ArrowRight, User as UserIcon, Check, Wallet, Trash2
+  ArrowLeft, ArrowRight, User as UserIcon, Check, Wallet, Trash2,
+  Printer
 } from "lucide-react";
+import { usePrint } from "../components/print/usePrint";
+import { RHListPrintTemplate, EmployeDetailPrintTemplate } from "../components/print/templates/RHPrintTemplate";
 
 export default function RH() {
   const { employees, setEmployees } = useApp();
@@ -97,6 +100,19 @@ export default function RH() {
         {status}
       </span>
     );
+  };
+
+  const { printDocument } = usePrint();
+
+  const handlePrintRHEmployees = () => {
+    const printContent = RHListPrintTemplate({ employes: filteredEmployees, period: "Tout", documentNumber: `RH-${new Date().toISOString().split('T')[0]}` });
+    printDocument(printContent, 'Rapport RH');
+  };
+
+  const handlePrintEmployeeDetails = () => {
+    if (!selectedEmployee) return;
+    const printContent = EmployeDetailPrintTemplate({ employe: selectedEmployee });
+    printDocument(printContent, `RH-Employe-${selectedEmployee.id}`);
   };
 
   const getAttendanceColor = (status) => {
@@ -559,6 +575,14 @@ export default function RH() {
             <Download className="h-4 w-4" />
             <span>Export</span>
           </button>
+          <button
+            onClick={handlePrintRHEmployees}
+            className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-semibold text-sm px-4 py-2.5 rounded-xl border border-border transition-all"
+            title="Imprimer le rapport RH"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer RH</span>
+          </button>
           <button 
             onClick={() => setNewEmployeeModalOpen(true)}
             className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-sm px-4 py-2.5 rounded-xl shadow-md shadow-blue-600/10 transition-all"
@@ -755,12 +779,21 @@ export default function RH() {
                     <p className="text-xs text-muted-foreground">{selectedEmployee.department}</p>
                   </div>
                 </div>
-                <button
-                  onClick={() => setSelectedEmployee(null)}
-                  className="p-2 hover:bg-secondary rounded-lg transition-colors"
-                >
-                  <X className="h-5 w-5" />
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={handlePrintEmployeeDetails}
+                    className="inline-flex items-center justify-center p-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
+                    title="Imprimer la fiche employé"
+                  >
+                    <Printer className="h-4 w-4" />
+                  </button>
+                  <button
+                    onClick={() => setSelectedEmployee(null)}
+                    className="p-2 hover:bg-secondary rounded-lg transition-colors"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
               </div>
               <div className="flex items-center gap-4 text-sm">
                 <div>

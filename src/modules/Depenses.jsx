@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { Plus, DollarSign, Wallet, Eye, Calendar, FileText, CheckCircle } from "lucide-react";
+import { Plus, DollarSign, Wallet, Eye, Calendar, FileText, CheckCircle, Printer } from "lucide-react";
+import { usePrint } from "../components/print/usePrint";
+import { DepensesListPrintTemplate, DepenseDetailPrintTemplate } from "../components/print/templates/DepensesPrintTemplate";
 
 export default function Depenses() {
   const {
@@ -12,6 +14,19 @@ export default function Depenses() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedDepenseDetails, setSelectedDepenseDetails] = useState(null);
+
+  const { printDocument } = usePrint();
+
+  const handlePrintDepenses = () => {
+    const printContent = DepensesListPrintTemplate({ depenses: filteredDepenses, period: "Tout", documentNumber: `DEPENSES-${new Date().toISOString().split('T')[0]}` });
+    printDocument(printContent, 'Rapport des Dépenses');
+  };
+
+  const handlePrintDepenseDetails = () => {
+    if (!selectedDepenseDetails) return;
+    const printContent = DepenseDetailPrintTemplate({ depense: selectedDepenseDetails });
+    printDocument(printContent, `Depense-${selectedDepenseDetails.reference || selectedDepenseDetails.date}`);
+  };
 
   // Form states
   const [categorie, setCategorie] = useState("Divers");
@@ -72,6 +87,14 @@ export default function Depenses() {
         >
           <Plus className="h-4 w-4" />
           <span>Nouvelle Dépense</span>
+        </button>
+        <button
+          onClick={handlePrintDepenses}
+          className="inline-flex items-center justify-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-4 py-2.5 rounded-xl border border-border transition-all duration-150 cursor-pointer self-start sm:self-auto"
+          title="Imprimer le rapport"
+        >
+          <Printer className="h-4 w-4" />
+          <span>Imprimer le rapport</span>
         </button>
       </div>
 
@@ -249,9 +272,18 @@ export default function Depenses() {
           <div className="bg-card rounded-xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="p-4 border-b border-border flex justify-between items-center">
               <h3 className="font-bold text-sm">Détails Dépense</h3>
-              <button onClick={() => setSelectedDepenseDetails(null)} className="text-muted-foreground hover:text-foreground">
-                <CheckCircle className="h-4 w-4" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handlePrintDepenseDetails}
+                  className="inline-flex items-center justify-center p-2 bg-secondary hover:bg-secondary/80 rounded-lg transition-colors"
+                  title="Imprimer"
+                >
+                  <Printer className="h-4 w-4" />
+                </button>
+                <button onClick={() => setSelectedDepenseDetails(null)} className="text-muted-foreground hover:text-foreground">
+                  <CheckCircle className="h-4 w-4" />
+                </button>
+              </div>
             </div>
             <div className="p-4 space-y-4 text-xs">
               <div className="bg-secondary/30 p-3 rounded-lg">

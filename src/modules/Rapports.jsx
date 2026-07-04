@@ -25,14 +25,35 @@ import {
   LineChart,
   Line
 } from "recharts";
+import { usePrint } from "../components/print/usePrint";
+import { RapportsPrintTemplate } from "../components/print/templates/RapportsPrintTemplate";
 
 export default function Rapports() {
   const {
     ventes,
     achats,
     depenses,
-    paiementsClients
+    paiementsClients,
+    clients
   } = useApp();
+  const { printDocument } = usePrint();
+
+  const handlePrint = () => {
+    const stats = {
+      totalCA,
+      totalAchats,
+      totalExpenses,
+      netProfit,
+      totalCollected,
+      totalClients: clients ? clients.length : 0
+    };
+    const printContent = RapportsPrintTemplate({
+      stats,
+      period: timeframe,
+      documentNumber: `RAP-${new Date().toISOString().split('T')[0]}`
+    });
+    printDocument(printContent, 'Rapport Général');
+  };
 
   const [timeframe, setTimeframe] = useState("mensuel"); // 'mensuel', 'trimestriel', 'annuel'
 
@@ -119,7 +140,7 @@ export default function Rapports() {
           </p>
         </div>
         <button
-          onClick={() => window.print()}
+          onClick={handlePrint}
           className="inline-flex items-center justify-center space-x-2 bg-card hover:bg-secondary border border-border text-foreground font-semibold text-xs px-3.5 py-2.5 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer self-start sm:self-auto"
         >
           <FileDown className="w-4 h-4 text-indigo-600" />

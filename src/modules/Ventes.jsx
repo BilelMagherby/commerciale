@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
 import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter, Printer, Eye, DollarSign, Calendar, Package, Mail, Trash2, Building, Upload } from "lucide-react";
+import { usePrint } from "../components/print/usePrint";
+import { VentesListPrintTemplate, VenteDetailPrintTemplate } from "../components/print/templates/VentesPrintTemplate";
 
 export default function Ventes() {
   const {
@@ -14,6 +16,8 @@ export default function Ventes() {
     addClientRecord,
     societe
   } = useApp();
+
+  const { printDocument } = usePrint();
 
   const [activeTab, setActiveTab] = useState("ventes");
   const [modalType, setModalType] = useState(null); // 'vente', 'devis', 'client', or null
@@ -28,7 +32,19 @@ export default function Ventes() {
   const [clientDateFilter, setClientDateFilter] = useState("");
 
   const handlePrint = () => {
-    window.print();
+    const printContent = VentesListPrintTemplate({
+      ventes: filteredVentes,
+      period: "Tout",
+      documentNumber: `VENTE-${new Date().toISOString().split('T')[0]}`
+    });
+    printDocument(printContent, 'Rapport des Ventes');
+  };
+
+  const handlePrintVenteDetails = () => {
+    if (!selectedVenteDetails) return;
+    const client = clients.find(c => c.nom === selectedVenteDetails.client);
+    const printContent = VenteDetailPrintTemplate({ vente: selectedVenteDetails, client });
+    printDocument(printContent, `Vente-${selectedVenteDetails.facture}`);
   };
 
   // Form states
@@ -1419,6 +1435,15 @@ export default function Ventes() {
 
       {/* Sale Details Modal */}
       <Modal isOpen={!!selectedVenteDetails} onClose={() => setSelectedVenteDetails(null)} title={`Détails Vente : ${selectedVenteDetails?.facture}`}>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handlePrintVenteDetails}
+            className="inline-flex items-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-3 py-2 rounded-lg border border-border transition-colors cursor-pointer"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer</span>
+          </button>
+        </div>
         {selectedVenteDetails && (() => {
           const client = clients.find(c => c.nom === selectedVenteDetails.client);
           return (

@@ -13,6 +13,8 @@ import {
   ArrowRight,
   Printer
 } from "lucide-react";
+import { usePrint } from "../components/print/usePrint";
+import { DashboardPrintTemplate } from "../components/print/templates/DashboardPrintTemplate";
 import {
   AreaChart,
   Area,
@@ -37,6 +39,8 @@ export default function Dashboard() {
     historique,
     clients
   } = useApp();
+
+  const { printDocument } = usePrint();
 
   // 1. Dynamic Statistics Calculations
   const totalCA = ventes.reduce((sum, v) => sum + v.total, 0);
@@ -132,7 +136,32 @@ export default function Dashboard() {
   const COLORS = ["#10b981", "#f59e0b", "#ef4444"];
 
   const handlePrint = () => {
-    window.print();
+    const stats = {
+      totalVentes: totalCA,
+      totalAchats: totalAchats,
+      totalDepenses: totalExpenses,
+      totalClients: clients.length,
+      totalFournisseurs: 0,
+      totalEmployes: 0,
+      ventesPayees: ventes.filter(v => v.statut === 'Payé').reduce((sum, v) => sum + v.total, 0),
+      ventesEnAttente: ventes.filter(v => v.statut === 'En attente').reduce((sum, v) => sum + v.total, 0),
+      achatsPayes: achats.filter(a => a.statut === 'Payé').reduce((sum, a) => sum + a.montant, 0),
+      achatsEnAttente: achats.filter(a => a.statut === 'En attente').reduce((sum, a) => sum + a.montant, 0),
+      paiementsRecus: 0,
+      recentActivity: historique.slice(0, 10).map(h => ({
+        type: h.type || 'Action',
+        description: h.description || 'N/A',
+        date: h.date || new Date().toISOString().split('T')[0],
+        montant: h.montant || 0
+      }))
+    };
+    
+    const printContent = DashboardPrintTemplate({
+      stats,
+      period: "Tout",
+      documentNumber: `DASH-${new Date().toISOString().split('T')[0]}`
+    });
+    printDocument(printContent, 'Rapport d\'Activité');
   };
 
   return (

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { FileSpreadsheet, FileDown, Calendar, User, Search, Filter } from "lucide-react";
+import { FileSpreadsheet, FileDown, Calendar, User, Search, Filter, Printer } from "lucide-react";
+import { usePrint } from "../components/print/usePrint";
+import { HistoriquePrintTemplate } from "../components/print/templates/HistoriquePrintTemplate";
 
 export default function Historique() {
   const {
@@ -11,6 +13,8 @@ export default function Historique() {
     searchQuery,
     addToast
   } = useApp();
+
+  const { printDocument } = usePrint();
 
   // Advanced Filters States
   const [filterDateDebut, setFilterDateDebut] = useState("");
@@ -97,10 +101,25 @@ export default function Historique() {
     addToast("success", "Export Excel Réussi", "Fichier CSV téléchargé.");
   };
 
-  // Export to PDF (mock trigger displaying printable receipt summary table)
+  // Export to PDF with dedicated print template
   const handleExportPdf = () => {
-    addToast("info", "Export PDF", "L'impression PDF a été lancée.");
-    window.print();
+    if (filteredLogs.length === 0) {
+      addToast("destructive", "Export Impossible", "Aucune donnée à imprimer.");
+      return;
+    }
+
+    const period = filterDateDebut || filterDateFin
+      ? `${filterDateDebut || 'Début'} - ${filterDateFin || 'Fin'}`
+      : "Toutes les périodes";
+
+    const printContent = HistoriquePrintTemplate({
+      historique: filteredLogs,
+      period,
+      documentNumber: `HIST-${new Date().toISOString().split('T')[0]}`
+    });
+
+    addToast("info", "Export PDF", "Le document d'impression est prêt.");
+    printDocument(printContent, 'Rapport Historique');
   };
 
   return (
