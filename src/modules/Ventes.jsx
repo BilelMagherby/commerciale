@@ -99,6 +99,8 @@ export default function Ventes() {
   const [devisItems, setDevisItems] = useState([
     { id: 1, article: "", length: "", width: "", quantity: "1", unitPrice: "" }
   ]);
+  const [showNewClientInput, setShowNewClientInput] = useState(false);
+  const [newClientName, setNewClientName] = useState("");
 
   // New Client form states
   const [newClient, setNewClient] = useState({
@@ -290,6 +292,24 @@ export default function Ventes() {
 
   const calculateVenteGrandTotal = () => {
     return venteItems.reduce((sum, item) => sum + calculateVenteRowTotal(item), 0);
+  };
+
+  const handleAddQuickClient = () => {
+    if (newClientName.trim() && !clients.find(c => c.nom === newClientName.trim())) {
+      const quickClient = {
+        nom: newClientName.trim(),
+        telephone: "",
+        email: "",
+        adresse: "",
+        solde: 0,
+        statut: "Actif"
+      };
+      addClientRecord(quickClient);
+      setDevisClient(newClientName.trim());
+      setClient(newClientName.trim());
+      setNewClientName("");
+      setShowNewClientInput(false);
+    }
   };
 
   const handleCreateClient = (e) => {
@@ -690,15 +710,43 @@ export default function Ventes() {
         <form onSubmit={handleCreateVente} className="space-y-4 text-xs">
           <div>
             <label className="block font-semibold mb-1 text-muted-foreground">Sélectionner un Client</label>
-            <select
-              value={client}
-              onChange={(e) => setClient(e.target.value)}
-              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-            >
-              {clients.map((c) => (
-                <option key={c.id} value={c.nom}>{c.nom}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={client}
+                onChange={(e) => setClient(e.target.value)}
+                className="flex-1 p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+              >
+                {clients.map((c) => (
+                  <option key={c.id} value={c.nom}>{c.nom}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowNewClientInput(!showNewClientInput)}
+                className="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors cursor-pointer"
+                title="Ajouter un nouveau client"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            {showNewClientInput && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nom du nouveau client"
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  className="flex-1 p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddQuickClient}
+                  className="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors text-xs cursor-pointer"
+                >
+                  Ajouter
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Items Table */}
@@ -858,15 +906,43 @@ export default function Ventes() {
         <form onSubmit={handleCreateDevis} className="space-y-4 text-xs">
           <div>
             <label className="block font-semibold mb-1 text-muted-foreground">Sélectionner un Client</label>
-            <select
-              value={devisClient}
-              onChange={(e) => setDevisClient(e.target.value)}
-              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-            >
-              {clients.map((c) => (
-                <option key={c.id} value={c.nom}>{c.nom}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={devisClient}
+                onChange={(e) => setDevisClient(e.target.value)}
+                className="flex-1 p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+              >
+                {clients.map((c) => (
+                  <option key={c.id} value={c.nom}>{c.nom}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowNewClientInput(!showNewClientInput)}
+                className="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors cursor-pointer"
+                title="Ajouter un nouveau client"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            {showNewClientInput && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nom du nouveau client"
+                  value={newClientName}
+                  onChange={(e) => setNewClientName(e.target.value)}
+                  className="flex-1 p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddQuickClient}
+                  className="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors text-xs cursor-pointer"
+                >
+                  Ajouter
+                </button>
+              </div>
+            )}
           </div>
 
           <div>

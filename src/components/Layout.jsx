@@ -238,6 +238,20 @@ export default function Layout({ children }) {
         {children}
       </main>
 
+      {/* Footer */}
+      <footer className="border-t border-border bg-card/50 backdrop-blur-sm py-4 px-4 md:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <a
+            href="https://mainportfolio-ebon.vercel.app/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-xs text-muted-foreground font-medium hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+          >
+            Développé Par Bilel Magherby
+          </a>
+        </div>
+      </footer>
+
       {/* Toast Notification Container */}
       <ToastContainer />
     </div>
