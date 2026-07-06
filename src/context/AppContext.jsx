@@ -97,6 +97,44 @@ export const AppProvider = ({ children }) => {
     addToast("info", "Thème mis à jour", `Mode ${theme === "light" ? "sombre" : "clair"} activé.`);
   };
 
+  // Clear all localStorage data and reset to mock data
+  const clearAllData = () => {
+    localStorage.removeItem("erp-clients");
+    localStorage.removeItem("erp-fournisseurs");
+    localStorage.removeItem("erp-ventes");
+    localStorage.removeItem("erp-achats");
+    localStorage.removeItem("erp-bons-commande");
+    localStorage.removeItem("erp-factures-achat");
+    localStorage.removeItem("erp-devis");
+    localStorage.removeItem("erp-paiements-clients");
+    localStorage.removeItem("erp-paiements-fournisseurs");
+    localStorage.removeItem("erp-transactions");
+    localStorage.removeItem("erp-depenses");
+    localStorage.removeItem("erp-historique");
+    localStorage.removeItem("erp-societe");
+    localStorage.removeItem("erp-utilisateurs");
+    localStorage.removeItem("erp-employees");
+    
+    // Reset all states to initial mock data
+    setClients(initialClients);
+    setFournisseurs(initialFournisseurs);
+    setVentes(initialVentes);
+    setAchats(initialAchats);
+    setBonsCommande(initialBonsCommande);
+    setFacturesAchat(initialFacturesAchat);
+    setDevis(initialDevis);
+    setPaiementsClients(initialPaiementsClients);
+    setPaiementsFournisseurs(initialPaiementsFournisseurs);
+    setTransactions(initialTransactions);
+    setDepenses(initialDepenses);
+    setHistorique(initialHistorique);
+    setSociete(initialSociete);
+    setUtilisateurs(initialUtilisateurs);
+    setEmployees(initialEmployees);
+    
+    addToast("success", "Données réinitialisées", "Toutes les données ont été réinitialisées aux valeurs par défaut.");
+  };
+
   // Add Log helper
   const addLog = (action, utilisateur, description) => {
     const newLog = {
@@ -387,6 +425,7 @@ export const AppProvider = ({ children }) => {
       value={{
         theme,
         toggleTheme,
+        clearAllData,
         searchQuery,
         setSearchQuery,
         notifications,

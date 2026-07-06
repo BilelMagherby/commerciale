@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useApp } from "../context/AppContext";
 import { Card, Badge, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
-import { DollarSign, Inbox, Percent, ArrowUpRight, ArrowDownRight, FileText, Download, Eye, User, Calendar, CheckCircle, Printer } from "lucide-react";
+import { DollarSign, Inbox, Percent, ArrowUpRight, ArrowDownRight, FileText, Download, Eye, User, Calendar, CheckCircle, Printer, Trash2 } from "lucide-react";
 import { usePrint } from "../components/print/usePrint";
 import {
   PaiementsClientsPrintTemplate,
@@ -18,7 +18,8 @@ export default function Paiements() {
     paiementsFournisseurs,
     transactions,
     searchQuery,
-    ventes
+    ventes,
+    clearAllData
   } = useApp();
 
   const { printDocument } = usePrint();
@@ -65,6 +66,7 @@ export default function Paiements() {
   const [selectedPaiementClient, setSelectedPaiementClient] = useState(null);
   const [selectedPaiementFournisseur, setSelectedPaiementFournisseur] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [showFactureDetails, setShowFactureDetails] = useState(false);
 
   // Dynamic Statistics
   const totalEncaisse = paiementsClients.reduce((sum, p) => sum + p.montant, 0);
@@ -151,6 +153,18 @@ export default function Paiements() {
         >
           <Printer className="h-4 w-4" />
           <span>Imprimer le rapport</span>
+        </button>
+        <button
+          onClick={() => {
+            if (confirm("Êtes-vous sûr de vouloir réinitialiser toutes les données ? Cela effacera toutes les modifications et restaurera les données par défaut.")) {
+              clearAllData();
+            }
+          }}
+          className="inline-flex items-center justify-center space-x-2 bg-red-500/10 hover:bg-red-500/20 text-red-600 font-medium text-xs px-4 py-2.5 rounded-xl border border-red-500/20 transition-all duration-150 cursor-pointer"
+          title="Réinitialiser toutes les données"
+        >
+          <Trash2 className="h-4 w-4" />
+          <span>Réinitialiser</span>
         </button>
       </div>
 
@@ -413,7 +427,12 @@ export default function Paiements() {
                       <FileText className="h-4 w-4" />
                       <span className="font-semibold">Facture Liée</span>
                     </div>
-                    <p className="font-bold text-foreground">{selectedPaiementClient.facture}</p>
+                    <button
+                      onClick={() => setShowFactureDetails(!showFactureDetails)}
+                      className="font-bold text-indigo-600 hover:text-indigo-500 hover:underline transition-colors cursor-pointer"
+                    >
+                      {selectedPaiementClient.facture}
+                    </button>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -439,6 +458,98 @@ export default function Paiements() {
                   </div>
                   <Badge status={selectedPaiementClient.statut} />
                 </div>
+                
+                {/* Facture Details Section */}
+                {showFactureDetails && (() => {
+                  const facture = ventes.find(v => v.facture === selectedPaiementClient.facture);
+                  if (!facture) return null;
+                  return (
+                    <div className="mt-4 pt-4 border-t border-border">
+                      <h4 className="font-bold text-sm mb-3 text-indigo-600">Détails de la Facture</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-secondary/30 p-3 rounded-lg">
+                          <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                            <FileText className="h-4 w-4" />
+                            <span className="font-semibold">Numéro Facture</span>
+                          </div>
+                          <p className="font-bold text-indigo-600">{facture.facture}</p>
+                        </div>
+                        <div className="bg-secondary/30 p-3 rounded-lg">
+                          <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                            <User className="h-4 w-4" />
+                            <span className="font-semibold">Client</span>
+                          </div>
+                          <p className="font-bold text-foreground">{facture.client}</p>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4 mt-4">
+                        <div className="bg-secondary/30 p-3 rounded-lg">
+                          <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                            <Calendar className="h-4 w-4" />
+                            <span className="font-semibold">Date d'émission</span>
+                          </div>
+                          <p className="font-semibold text-foreground">{facture.date}</p>
+                        </div>
+                        <div className="bg-secondary/30 p-3 rounded-lg">
+                          <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                            <DollarSign className="h-4 w-4" />
+                            <span className="font-semibold">Total TTC</span>
+                          </div>
+                          <p className="font-bold text-foreground">{facture.total.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €</p>
+                        </div>
+                      </div>
+                      <div className="bg-secondary/30 p-3 rounded-lg mt-4">
+                        <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                          <CheckCircle className="h-4 w-4" />
+                          <span className="font-semibold">Statut</span>
+                        </div>
+                        <Badge status={facture.statut} />
+                      </div>
+                      {facture.articles && facture.articles.length > 0 && (
+                        <div className="bg-secondary/30 p-3 rounded-lg mt-4">
+                          <div className="flex items-center space-x-2 text-muted-foreground mb-2">
+                            <FileText className="h-4 w-4" />
+                            <span className="font-semibold">Articles</span>
+                          </div>
+                          <div className="border border-border rounded-lg overflow-hidden">
+                            <table className="w-full text-left">
+                              <thead className="bg-secondary/50">
+                                <tr>
+                                  <th className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground">Article</th>
+                                  <th className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground w-16">Longueur</th>
+                                  <th className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground w-16">Largeur</th>
+                                  <th className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground w-12">Qté</th>
+                                  <th className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground w-20">Prix Unit.</th>
+                                  <th className="px-2 py-1.5 text-[10px] font-semibold text-muted-foreground w-20 text-right">Total</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-border">
+                                {facture.articles.map((article, idx) => (
+                                  <tr key={idx} className="hover:bg-secondary/30">
+                                    <td className="px-2 py-1.5 text-[10px] font-medium">{article.nom}</td>
+                                    <td className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                                      {article.longueur ? `${article.longueur} m` : '-'}
+                                    </td>
+                                    <td className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                                      {article.largeur ? `${article.largeur} m` : '-'}
+                                    </td>
+                                    <td className="px-2 py-1.5 text-[10px] text-muted-foreground">{article.quantite}</td>
+                                    <td className="px-2 py-1.5 text-[10px] text-muted-foreground">
+                                      {article.prixUnitaire?.toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+                                    </td>
+                                    <td className="px-2 py-1.5 text-[10px] font-semibold text-right">
+                                      {(article.total || (article.quantite * article.prixUnitaire)).toLocaleString("fr-FR", { minimumFractionDigits: 2 })} €
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           </div>

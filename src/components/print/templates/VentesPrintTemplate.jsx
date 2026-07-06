@@ -264,39 +264,49 @@ export function VenteDetailPrintTemplate({ vente, client }) {
         </div>
 
         <!-- Items -->
-        ${vente.items && vente.items.length > 0 ? `
+        ${vente.articles && vente.articles.length > 0 ? `
         <div class="print-section">
-          <div class="print-section-title">ARTICLES</div>
+          <div class="print-section-title">DÉTAIL DES ARTICLES</div>
           <table class="print-table">
             <thead>
               <tr>
-                <th>Description</th>
+                <th>Désignation</th>
+                <th class="text-center">Longueur (m)</th>
+                <th class="text-center">Largeur (m)</th>
                 <th class="text-center">Quantité</th>
-                <th class="text-right">Prix Unitaire</th>
-                <th class="text-right">Total</th>
+                <th class="text-right">Prix Unitaire (€)</th>
+                <th class="text-right">Total (€)</th>
               </tr>
             </thead>
             <tbody>
-              ${vente.items.map((item, idx) => `
+              ${vente.articles.map((article, idx) => {
+                const total = article.total || (article.quantite * article.prixUnitaire);
+                return `
                 <tr>
-                  <td>${item.description}</td>
-                  <td class="text-center">${item.quantite}</td>
-                  <td class="text-right print-money">${item.prixUnitaire.toFixed(2)} €</td>
-                  <td class="text-right print-money">${item.total.toFixed(2)} €</td>
+                  <td>
+                    <strong>${article.nom}</strong>
+                    ${article.description ? `<br><small>${article.description}</small>` : ''}
+                  </td>
+                  <td class="text-center">${article.longueur ? article.longueur + ' m' : '-'}</td>
+                  <td class="text-center">${article.largeur ? article.largeur + ' m' : '-'}</td>
+                  <td class="text-center">${article.quantite}</td>
+                  <td class="text-right print-money">${article.prixUnitaire.toFixed(2)}</td>
+                  <td class="text-right print-money">${total.toFixed(2)}</td>
                 </tr>
-              `).join('')}
+                `;
+              }).join('')}
             </tbody>
             <tfoot>
               <tr class="subtotal-row">
-                <td colspan="3" class="text-right">Sous-total HT:</td>
+                <td colspan="5" class="text-right"><strong>Sous-total HT:</strong></td>
                 <td class="text-right print-money">${(vente.total / 1.19).toFixed(2)} €</td>
               </tr>
               <tr>
-                <td colspan="3" class="text-right">TVA (19%):</td>
+                <td colspan="5" class="text-right">TVA (19%):</td>
                 <td class="text-right print-money">${((vente.total / 1.19) * 0.19).toFixed(2)} €</td>
               </tr>
               <tr class="total-row">
-                <td colspan="3" class="text-right">TOTAL TTC:</td>
+                <td colspan="5" class="text-right"><strong>TOTAL TTC:</strong></td>
                 <td class="text-right print-money">${vente.total.toFixed(2)} €</td>
               </tr>
             </tfoot>
@@ -308,6 +318,179 @@ export function VenteDetailPrintTemplate({ vente, client }) {
         <div class="print-info-box">
           <div class="print-info-box-title">NOTES</div>
           <p>${vente.notes}</p>
+        </div>
+        ` : ''}
+
+        <!-- Signatures -->
+        <div class="print-signatures">
+          <div class="print-signature">
+            <div class="print-signature-line">Signature Client</div>
+          </div>
+          <div class="print-signature">
+            <div class="print-signature-line">Signature Responsable</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="print-footer">
+        <div class="footer-left">
+          <p>Document généré automatiquement par ERP PRO</p>
+        </div>
+        <div class="footer-right">
+          <p>Page <span class="page-number">1</span>/1</p>
+          <p class="print-date-footer">${printDate}</p>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+export function DevisDetailPrintTemplate({ devis, client }) {
+  const companyInfo = {
+    name: "Marbre & Pierre",
+    logo: "🏛️",
+    address: "123 Rue du Commerce, Tunis",
+    phone: "+216 71 123 456",
+    email: "contact@marbre-pierre.tn",
+    matriculeFiscal: "1234567/A/M/000",
+    registreCommerce: "B1234567890"
+  };
+
+  const printDate = new Date().toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  });
+
+  const printTime = new Date().toLocaleTimeString('fr-FR', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  return `
+    <div class="print-document">
+      <!-- Header -->
+      <div class="print-header">
+        <div class="print-header-left">
+          <div class="company-logo">${companyInfo.logo}</div>
+          <div class="company-info">
+            <h1 class="company-name">${companyInfo.name}</h1>
+            <p class="company-address">${companyInfo.address}</p>
+            <p class="company-contact">
+              <span>Tél: ${companyInfo.phone}</span>
+              <span>Email: ${companyInfo.email}</span>
+            </p>
+            <p class="company-legal">
+              <span>MF: ${companyInfo.matriculeFiscal}</span>
+              <span>RC: ${companyInfo.registreCommerce}</span>
+            </p>
+          </div>
+        </div>
+        <div class="print-header-right">
+          <div class="document-meta">
+            <div class="meta-row">
+              <span class="meta-label">Date d'impression:</span>
+              <span class="meta-value">${printDate} à ${printTime}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">N° Devis:</span>
+              <span class="meta-value">${devis.numero}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div class="print-title">
+        <h2>DEVIS</h2>
+      </div>
+
+      <!-- Content -->
+      <div class="print-content">
+        <!-- Client Info -->
+        <div class="print-info-box">
+          <div class="print-info-box-title">INFORMATIONS CLIENT</div>
+          <div class="print-grid-2">
+            <div class="print-info-row">
+              <span class="print-info-label">Nom:</span>
+              <span class="print-info-value">${devis.client}</span>
+            </div>
+            <div class="print-info-row">
+              <span class="print-info-label">Téléphone:</span>
+              <span class="print-info-value">${client?.telephone || 'N/A'}</span>
+            </div>
+            <div class="print-info-row">
+              <span class="print-info-label">Email:</span>
+              <span class="print-info-value">${client?.email || 'N/A'}</span>
+            </div>
+            <div class="print-info-row">
+              <span class="print-info-label">Adresse:</span>
+              <span class="print-info-value">${client?.adresse || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Devis Info -->
+        <div class="print-info-box">
+          <div class="print-info-box-title">INFORMATIONS DEVIS</div>
+          <div class="print-grid-2">
+            <div class="print-info-row">
+              <span class="print-info-label">N° Devis:</span>
+              <span class="print-info-value text-bold">${devis.numero}</span>
+            </div>
+            <div class="print-info-row">
+              <span class="print-info-label">Date:</span>
+              <span class="print-info-value">${devis.date}</span>
+            </div>
+            <div class="print-info-row">
+              <span class="print-info-label">Montant Estimé:</span>
+              <span class="print-info-value print-money">${devis.montant.toFixed(2)} €</span>
+            </div>
+            <div class="print-info-row">
+              <span class="print-info-label">Statut:</span>
+              <span class="print-info-value">
+                <span class="print-status ${devis.statut.toLowerCase().replace(' ', '-')}">${devis.statut}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+
+        ${devis.surface || devis.lineaire || devis.metrage || devis.typeProjet || devis.description ? `
+        <div class="print-info-box">
+          <div class="print-info-box-title">DÉTAILS PROJET</div>
+          <div class="print-grid-2">
+            ${devis.surface ? `
+            <div class="print-info-row">
+              <span class="print-info-label">Surface:</span>
+              <span class="print-info-value">${devis.surface} m²</span>
+            </div>
+            ` : ''}
+            ${devis.lineaire ? `
+            <div class="print-info-row">
+              <span class="print-info-label">Linéaire:</span>
+              <span class="print-info-value">${devis.lineaire} m</span>
+            </div>
+            ` : ''}
+            ${devis.metrage ? `
+            <div class="print-info-row">
+              <span class="print-info-label">Métrage:</span>
+              <span class="print-info-value">${devis.metrage} m</span>
+            </div>
+            ` : ''}
+            ${devis.typeProjet ? `
+            <div class="print-info-row">
+              <span class="print-info-label">Type Projet:</span>
+              <span class="print-info-value">${devis.typeProjet}</span>
+            </div>
+            ` : ''}
+          </div>
+          ${devis.description ? `
+          <div class="print-info-row" style="margin-top: 10px;">
+            <span class="print-info-label">Description:</span>
+            <span class="print-info-value">${devis.description}</span>
+          </div>
+          ` : ''}
         </div>
         ` : ''}
 

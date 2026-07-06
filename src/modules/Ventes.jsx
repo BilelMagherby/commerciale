@@ -3,7 +3,7 @@ import { useApp } from "../context/AppContext";
 import { Card, Badge, Modal, TableContainer, THead, TBody, Tr, Th, Td } from "../components/ui/SharedUI";
 import { Plus, FileText, Download, User, Phone, MapPin, CheckCircle, FileUp, History, Clock, Filter, Printer, Eye, DollarSign, Calendar, Package, Mail, Trash2, Building, Upload } from "lucide-react";
 import { usePrint } from "../components/print/usePrint";
-import { VentesListPrintTemplate, VenteDetailPrintTemplate } from "../components/print/templates/VentesPrintTemplate";
+import { VentesListPrintTemplate, VenteDetailPrintTemplate, DevisDetailPrintTemplate } from "../components/print/templates/VentesPrintTemplate";
 
 export default function Ventes() {
   const {
@@ -47,13 +47,49 @@ export default function Ventes() {
     printDocument(printContent, `Vente-${selectedVenteDetails.facture}`);
   };
 
+  const handleOpenVenteInNewTab = () => {
+    if (!selectedVenteDetails) return;
+    const client = clients.find(c => c.nom === selectedVenteDetails.client);
+    const printContent = VenteDetailPrintTemplate({ vente: selectedVenteDetails, client });
+
+    const newWindow = window.open('', '_blank');
+    newWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Facture ${selectedVenteDetails.facture}</title>
+          <style>
+            body { font-family: Arial, sans-serif; padding: 20px; }
+            @media print { body { padding: 0; } }
+          </style>
+        </head>
+        <body>
+          ${printContent}
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    newWindow.document.close();
+  };
+
+  const handlePrintDevisDetails = () => {
+    if (!selectedDevisDetails) return;
+    const client = clients.find(c => c.nom === selectedDevisDetails.client);
+    const printContent = DevisDetailPrintTemplate({ devis: selectedDevisDetails, client });
+    printDocument(printContent, `Devis-${selectedDevisDetails.numero}`);
+  };
+
   // Form states
   const [client, setClient] = useState(clients[0]?.nom || "");
   const [total, setTotal] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
   const [statut, setStatut] = useState("En attente");
   const [venteItems, setVenteItems] = useState([
-    { id: 1, article: "", quantity: "1", unitPrice: "", description: "" }
+    { id: 1, article: "", length: "", width: "", quantity: "1", unitPrice: "", description: "" }
   ]);
 
   const [devisClient, setDevisClient] = useState(clients[0]?.nom || "");
@@ -135,6 +171,8 @@ export default function Ventes() {
     
     const articles = venteItems.map(item => ({
       nom: item.article,
+      longueur: parseFloat(item.length) || 0,
+      largeur: parseFloat(item.width) || 0,
       quantite: parseFloat(item.quantity) || 1,
       prixUnitaire: parseFloat(item.unitPrice) || 0,
       total: calculateVenteRowTotal(item),
@@ -153,7 +191,7 @@ export default function Ventes() {
     setTotal("");
     setDate(new Date().toISOString().split("T")[0]);
     setStatut("En attente");
-    setVenteItems([{ id: 1, article: "", quantity: "1", unitPrice: "", description: "" }]);
+    setVenteItems([{ id: 1, article: "", length: "", width: "", quantity: "1", unitPrice: "", description: "" }]);
   };
 
   const handleCreateDevis = (e) => {
@@ -215,7 +253,7 @@ export default function Ventes() {
 
   const addVenteItemRow = () => {
     const newId = Math.max(...venteItems.map(item => item.id), 0) + 1;
-    setVenteItems([...venteItems, { id: newId, article: "", quantity: "1", unitPrice: "", description: "" }]);
+    setVenteItems([...venteItems, { id: newId, article: "", length: "", width: "", quantity: "1", unitPrice: "", description: "" }]);
   };
 
   const removeVenteItemRow = (id) => {
@@ -243,9 +281,11 @@ export default function Ventes() {
   };
 
   const calculateVenteRowTotal = (item) => {
+    const length = parseFloat(item.length) || 0;
+    const width = parseFloat(item.width) || 0;
     const quantity = parseFloat(item.quantity) || 0;
     const unitPrice = parseFloat(item.unitPrice) || 0;
-    return quantity * unitPrice;
+    return length * width * unitPrice * quantity;
   };
 
   const calculateVenteGrandTotal = () => {
@@ -563,7 +603,15 @@ export default function Ventes() {
               ) : (
                 filteredDevis.map((d) => (
                   <Tr key={d.id}>
-                    <Td className="font-bold text-foreground">{d.numero}</Td>
+                    <Td className="font-bold">
+                      <button
+                        onClick={() => setSelectedDevisDetails(d)}
+                        className="text-indigo-600 hover:text-indigo-500 hover:underline transition-colors cursor-pointer"
+                        title="Voir les détails"
+                      >
+                        {d.numero}
+                      </button>
+                    </Td>
                     <Td className="font-medium">{d.client}</Td>
                     <Td className="text-muted-foreground">{d.date}</Td>
                     <Td className="text-xs text-muted-foreground">{d.surface || "-"}</Td>
@@ -672,6 +720,8 @@ export default function Ventes() {
                 <thead className="bg-secondary/50">
                   <tr>
                     <th className="px-3 py-2 text-xs font-semibold text-muted-foreground">Article</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-20">Longueur (m)</th>
+                    <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-20">Largeur (m)</th>
                     <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-20">Quantité</th>
                     <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-24">Prix Unitaire (€)</th>
                     <th className="px-3 py-2 text-xs font-semibold text-muted-foreground w-24">Total (€)</th>
@@ -687,6 +737,26 @@ export default function Ventes() {
                           placeholder="Nom de l'article"
                           value={item.article}
                           onChange={(e) => updateVenteItemRow(item.id, "article", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={item.length}
+                          onChange={(e) => updateVenteItemRow(item.id, "length", e.target.value)}
+                          className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                        />
+                      </td>
+                      <td className="px-3 py-2">
+                        <input
+                          type="number"
+                          step="0.01"
+                          placeholder="0.00"
+                          value={item.width}
+                          onChange={(e) => updateVenteItemRow(item.id, "width", e.target.value)}
                           className="w-full p-1.5 bg-input border border-border rounded text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
                         />
                       </td>
@@ -1340,6 +1410,16 @@ export default function Ventes() {
 
       {/* Devis Details Modal */}
       <Modal isOpen={!!selectedDevisDetails} onClose={() => setSelectedDevisDetails(null)} title={`Détails Devis : ${selectedDevisDetails?.numero}`}>
+        <div className="flex justify-end mb-4">
+          <button
+            onClick={handlePrintDevisDetails}
+            className="inline-flex items-center justify-center space-x-2 bg-secondary hover:bg-secondary/80 text-foreground font-medium text-xs px-4 py-2.5 rounded-xl border border-border transition-all duration-150 cursor-pointer"
+            title="Imprimer"
+          >
+            <Printer className="h-4 w-4" />
+            <span>Imprimer</span>
+          </button>
+        </div>
         {selectedDevisDetails && (() => {
           const client = clients.find(c => c.nom === selectedDevisDetails.client);
           return (
@@ -1461,7 +1541,13 @@ export default function Ventes() {
                     <FileText className="h-4 w-4" />
                     <span className="font-semibold">Facture</span>
                   </div>
-                  <p className="font-bold text-foreground">{selectedVenteDetails.facture}</p>
+                  <button
+                    onClick={handleOpenVenteInNewTab}
+                    className="font-bold text-indigo-600 hover:text-indigo-500 hover:underline transition-colors cursor-pointer"
+                    title="Ouvrir dans un nouvel onglet"
+                  >
+                    {selectedVenteDetails.facture}
+                  </button>
                 </div>
               </div>
 

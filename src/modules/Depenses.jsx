@@ -33,8 +33,18 @@ export default function Depenses() {
   const [description, setDescription] = useState("");
   const [montant, setMontant] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+  const [categories, setCategories] = useState(["Loyer", "Transport", "Salaires", "Electricité", "Divers"]);
+  const [showNewCategoryInput, setShowNewCategoryInput] = useState(false);
+  const [newCategory, setNewCategory] = useState("");
 
-  const categories = ["Loyer", "Transport", "Salaires", "Electricité", "Divers"];
+  const handleAddCategory = () => {
+    if (newCategory.trim() && !categories.includes(newCategory.trim())) {
+      setCategories([...categories, newCategory.trim()]);
+      setCategorie(newCategory.trim());
+      setNewCategory("");
+      setShowNewCategoryInput(false);
+    }
+  };
 
   const handleCreateExpense = (e) => {
     e.preventDefault();
@@ -201,15 +211,43 @@ export default function Depenses() {
         <form onSubmit={handleCreateExpense} className="space-y-4 text-xs">
           <div>
             <label className="block font-semibold mb-1 text-muted-foreground">Catégorie de charge</label>
-            <select
-              value={categorie}
-              onChange={(e) => setCategorie(e.target.value)}
-              className="w-full p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
-            >
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
+            <div className="flex gap-2">
+              <select
+                value={categorie}
+                onChange={(e) => setCategorie(e.target.value)}
+                className="flex-1 p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+              >
+                {categories.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setShowNewCategoryInput(!showNewCategoryInput)}
+                className="p-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition-colors cursor-pointer"
+                title="Ajouter une nouvelle catégorie"
+              >
+                <Plus className="h-4 w-4" />
+              </button>
+            </div>
+            {showNewCategoryInput && (
+              <div className="mt-2 flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Nouvelle catégorie"
+                  value={newCategory}
+                  onChange={(e) => setNewCategory(e.target.value)}
+                  className="flex-1 p-2.5 bg-input border border-border rounded-lg text-foreground text-xs focus:ring-1 focus:ring-ring focus:outline-none"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddCategory}
+                  className="px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-colors text-xs cursor-pointer"
+                >
+                  Ajouter
+                </button>
+              </div>
+            )}
           </div>
 
           <div>
